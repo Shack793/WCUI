@@ -1,0 +1,578 @@
+"use client"
+
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Slider } from "@/components/ui/slider"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { CreditCard, Smartphone, Info } from "lucide-react"
+import { paymentsApi } from '@/services/api';
+import { useToast } from '@/components/ui/use-toast';
+import type { DebitWalletPayload } from '@/lib/types';
+
+interface Campaign {
+  id: number
+  user_id: number
+  category_id: number
+  title: string
+  slug: string
+  description: string
+  goal_amount: string
+  current_amount: string
+  start_date: string
+  end_date: string
+  status: string
+  visibility: string
+  thumbnail: string | null
+  image_url: string | null
+  created_at: string
+  updated_at: string
+  category: {
+    id: number
+    name: string
+    description: string
+  }
+  user: {
+    id: number
+    name: string
+    email: string
+  }
+}
+
+export default function DonationForm(props: any) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedAmount, setSelectedAmount] = useState<string>("")
+  const [customAmount, setCustomAmount] = useState<string>("")
+  const [tipPercentage, setTipPercentage] = useState<number[]>([2])
+  const [paymentMethod, setPaymentMethod] = useState<string>("momo")
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(false)
+  const [marketingUpdates, setMarketingUpdates] = useState<boolean>(true)
+  const [showCustomTip, setShowCustomTip] = useState<boolean>(false)
+  const [customTip, setCustomTip] = useState<string>("")
+  const [momoFields, setMomoFields] = useState({
+    customer: '',
+    msisdn: '',
+    network: '',
+    narration: '',
+  });
+
+  const { toast } = useToast();
+
+  const predefinedAmounts = ["50", "100", "200", "300", "500", "1000"]
+
+  const getDonationAmount = (): number => {
+    const amount = customAmount || selectedAmount
+    return amount ? Number.parseFloat(amount) : 0
+  }
+
+  const getTipAmount = (): number => {
+    if (showCustomTip && customTip) {
+      return Number.parseFloat(customTip)
+    }
+    return (getDonationAmount() * tipPercentage[0]) / 100
+  }
+
+  const getTotalAmount = (): number => {
+    return getDonationAmount() + getTipAmount()
+  }
+
+  const handleAmountSelect = (amount: string) => {
+    setSelectedAmount(amount)
+    setCustomAmount(amount)
+  }
+
+  const handleCustomAmountChange = (value: string) => {
+    setCustomAmount(value)
+    setSelectedAmount("")
+  }
+
+  const formatCurrency = (amount: number): string => {
+    return `₵${amount.toFixed(2)}`
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (paymentMethod === 'momo') {
+      const momoPayload: DebitWalletPayload = {
+        customer: momoFields.customer,
+        msisdn: momoFields.msisdn,
+        amount: getTotalAmount().toFixed(2),
+        network: momoFields.network,
+        narration: momoFields.narration,
+      };
+      let transactionId: string | undefined;
+      let status: string = 'pending';
+      let statusRes: any = null;
+      let lastApiError: any = null;
+      let lastToastError: string | undefined = undefined;
+      let shouldAttemptGuestDonation = false;
+      try {
+        console.log('Sending MoMo payload:', momoPayload);
+        const res = await paymentsApi.debitWallet(momoPayload);
+        const data = res.data;
+        console.log('MoMo API response:', data);
+        transactionId = data.transactionId;
+        if (transactionId) {
+          toast({ title: 'Payment Initiated', description: 'Check your phone to approve payment.' });
+          // Poll for status
+          let pollCount = 0;
+          while (status === 'pending' && pollCount < 10) {
+            await new Promise(r => setTimeout(r, 3000));
+            statusRes = await paymentsApi.checkStatus(transactionId);
+            status = statusRes.data.status;
+            toast({ title: 'Payment Status', description: `Status: ${status}` });
+            pollCount++;
+          }
+        } else {
+          lastToastError = data.message || 'Unknown error';
+          toast({ title: 'Payment Error', description: lastToastError });
+          // If no transactionId, but not the specific MoMo failure, attempt guest donation
+          shouldAttemptGuestDonation = true;
+        }
+      } catch (err: any) {
+        lastApiError = err?.response?.data;
+        let errorMsg = '';
+        if (err.response) {
+          errorMsg = `API Error: ${JSON.stringify(err.response.data)}`;
+          console.error('API Error Response:', err.response.data);
+          toast({ title: 'Payment Error', description: errorMsg });
+        } else if (err.request) {
+          errorMsg = 'No response from server. Please check your network or server logs.';
+          console.error('API No Response:', err.request);
+          toast({ title: 'Payment Error', description: errorMsg });
+        } else {
+          errorMsg = `Network Error: ${err.message}`;
+          console.error('API Error:', err.message);
+          toast({ title: 'Payment Error', description: errorMsg });
+        }
+        lastToastError = errorMsg;
+        // Cache error for debugging
+        try {
+          localStorage.setItem('last_momo_error', JSON.stringify({ error: err, payload: momoPayload, time: new Date().toISOString() }));
+        } catch (storageErr) {
+          console.error('Failed to cache error:', storageErr);
+        }
+        // If not the specific MoMo failure, attempt guest donation
+        if (!(lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed')) {
+          shouldAttemptGuestDonation = true;
+        }
+      }
+
+      // If error is not the specific MoMo failure, make guest contribution
+      const isSpecificMoMoFailure = lastToastError && lastToastError.includes('errorCode') && lastToastError.includes('100') && lastToastError.includes('Transaction Failed');
+      if (!isSpecificMoMoFailure && shouldAttemptGuestDonation && id) {
+        try {
+          const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${id}/donate/guest`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              payment_method_id: 1,
+              amount: getDonationAmount(),
+              name: momoFields.customer || 'John Doe',
+              email: 'john@example.com',
+            }),
+          });
+          const guestDonationData = await guestDonationRes.json();
+          if (guestDonationRes.ok) {
+            toast({ title: 'Donation Recorded', description: 'Thank you for your donation!' });
+          } else {
+            toast({ title: 'Donation Record Error', description: guestDonationData.message || 'Failed to record donation.' });
+          }
+        } catch (guestErr: any) {
+          toast({ title: 'Donation Record Error', description: guestErr.message || 'Failed to record donation.' });
+        }
+        if (id) localStorage.setItem('last_campaign_id', id.toString());
+        navigate(`/campaign/${id}`);
+        return;
+      }
+
+      // Always check status if transactionId exists
+      if (transactionId) {
+        try {
+          const checkRes = await paymentsApi.checkStatus(transactionId);
+          const checkData = checkRes.data;
+          toast({ title: 'Final Payment Status', description: `Status: ${checkData.status}` });
+          // If NOT the specific MoMo failure, update contribution
+          const isFailed = lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed';
+          if (!isFailed && id) {
+            // You may want to collect name/email from user, here using placeholders
+            const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${id}/donate/guest`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                payment_method_id: 1,
+                amount: getDonationAmount(),
+                name: momoFields.customer || 'John Doe',
+                email: 'john@example.com',
+              }),
+            });
+            const guestDonationData = await guestDonationRes.json();
+            if (guestDonationRes.ok) {
+              toast({ title: 'Donation Recorded', description: 'Thank you for your donation!' });
+            } else {
+              toast({ title: 'Donation Record Error', description: guestDonationData.message || 'Failed to record donation.' });
+            }
+          }
+          // Store last campaign id before redirect
+          if (id) localStorage.setItem('last_campaign_id', id.toString());
+          navigate(`/campaign/${id}`);
+        } catch (checkErr: any) {
+          toast({ title: 'Status Check Error', description: checkErr.message || 'Failed to check payment status.' });
+          if (id) localStorage.setItem('last_campaign_id', id.toString());
+          navigate(`/campaign/${id}`);
+        }
+      } else {
+        // If no transactionId, just redirect
+        if (id) localStorage.setItem('last_campaign_id', id.toString());
+        navigate(`/campaign/${id}`);
+      }
+      return;
+    }
+
+    // Default donation logic for other payment methods
+    const donationData = {
+      amount: getDonationAmount(),
+      tip: getTipAmount(),
+      total: getTotalAmount(),
+      paymentMethod,
+      isAnonymous,
+      marketingUpdates,
+    }
+
+    console.log("Donation submitted:", donationData)
+    // Handle form submission here
+    alert(`Thank you for your donation of ${formatCurrency(getTotalAmount())}!`)
+  }
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    fetch('http://127.0.0.1:8000/api/v1/campaigns/public')
+      .then(res => res.json())
+      .then(data => {
+        const campaignsData = Array.isArray(data) ? data : data.data || [];
+        const found = campaignsData.find((c: Campaign) => c.id === Number(id));
+        if (found) setCampaign(found);
+        else setError('Campaign not found');
+      })
+      .catch(() => setError('Failed to fetch campaign details'))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  // Network auto-detection for MoMo
+  useEffect(() => {
+    const msisdn = momoFields.msisdn || "";
+    if (
+      msisdn.startsWith("024") || msisdn.startsWith("025") || msisdn.startsWith("053") || msisdn.startsWith("054") || msisdn.startsWith("055") || msisdn.startsWith("059") ||
+      msisdn.startsWith("+23324") || msisdn.startsWith("+23325") || msisdn.startsWith("+23353") || msisdn.startsWith("+23354") || msisdn.startsWith("+23355") || msisdn.startsWith("+23359")
+    ) {
+      setMomoFields((prev) => ({ ...prev, network: "MTN" }));
+    } else if (
+      msisdn.startsWith("020") || msisdn.startsWith("050") ||
+      msisdn.startsWith("+23320") || msisdn.startsWith("+23350")
+    ) {
+      setMomoFields((prev) => ({ ...prev, network: "VODAFONE" }));
+    } else if (
+      msisdn.startsWith("027") || msisdn.startsWith("057") || msisdn.startsWith("026") ||
+      msisdn.startsWith("+23327") || msisdn.startsWith("+23357") || msisdn.startsWith("+23326")
+    ) {
+      setMomoFields((prev) => ({ ...prev, network: "AIRTELTIGO" }));
+    } else {
+      setMomoFields((prev) => ({ ...prev, network: "" }));
+    }
+  }, [momoFields.msisdn]);
+
+  const getImageUrl = (url: string | null) => {
+    if (!url) return "/placeholder.svg?height=80&width=80";
+    if (url.startsWith("http")) return url;
+    return `http://127.0.0.1:8000${url}`;
+  };
+
+  // Modified payment method selection to allow deselect
+  const handlePaymentMethodSelect = (method: string) => {
+    setPaymentMethod((prev) => (prev === method ? '' : method));
+  };
+
+  return (
+    <>
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-[#37b7ff] to-[#2a8fc7] text-white mb-8">
+        <div className="absolute inset-0 bg-[#37b7ff] bg-opacity-80"></div>
+        <div
+          className="relative h-64 bg-cover bg-center flex items-center justify-center"
+          style={{
+            backgroundImage: "url('https://images.pexels.com/photos/6646917/pexels-photo-6646917.jpeg?auto=compress&cs=tinysrgb&w=1200')"
+          }}
+        >
+          <div className="text-center z-10">
+            <h1 className="text-5xl font-bold mb-4">Donations</h1>
+            <nav className="text-white">
+              <span className="hover:text-gray-200 cursor-pointer">Home</span>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+        <form onSubmit={handleSubmit}>
+          {/* Campaign Details (inside form, always visible if campaign loaded) */}
+          <div className="flex items-center p-4 border-b mb-4 min-h-[80px]">
+            {campaign ? (
+              <>
+                <img
+                  src={getImageUrl(campaign.image_url)}
+                  alt="Campaign"
+                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                />
+                <div className="ml-4 flex-1 min-w-0">
+                  <p className="text-sm text-gray-600 mb-1">You're supporting</p>
+                  <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-2">{campaign.title}</h3>
+                  <p className="text-xs text-gray-500">Your donation will benefit {campaign.user?.name || 'the beneficiary'}.</p>
+                </div>
+              </>
+            ) : (
+              <div className="w-full text-center text-gray-400">Loading campaign info...</div>
+            )}
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Donation Amount Section */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Enter your donation</h4>
+
+              {/* Predefined Amounts */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {predefinedAmounts.map((amount) => (
+                  <Button
+                    key={amount}
+                    type="button"
+                    variant={selectedAmount === amount ? "default" : "outline"}
+                    className={`h-10 text-sm ${
+                      selectedAmount === amount
+                        ? "bg-green-600 hover:bg-green-700 text-white"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                    onClick={() => handleAmountSelect(amount)}
+                  >
+                    ₵{amount}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Custom Amount Input */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center">
+                  <span className="text-lg font-medium text-gray-700">₵</span>
+                  <span className="text-xs text-gray-500 ml-1">GHS</span>
+                </div>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={customAmount}
+                  onChange={(e) => handleCustomAmountChange(e.target.value)}
+                  className="pl-16 pr-12 h-12 text-lg border-gray-300 focus:border-green-500 focus:ring-green-500"
+                  min="1"
+                  step="0.01"
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <span className="text-2xl font-light text-gray-400">.00</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tip Section */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <h4 className="font-semibold text-gray-900">Tip   services</h4>
+                <Info className="h-4 w-4 text-gray-400" />
+              </div>
+
+              <p className="text-sm text-gray-600 leading-relaxed">
+                WaltergateFund has a 0% platform fee for organizers. WaltergateFund will continue offering its services thanks to
+                donors who will leave an optional amount here:
+              </p>
+
+              <div className="space-y-4">
+                <div className="text-center">
+                  <span className="text-2xl font-bold text-gray-900">{tipPercentage[0]}%</span>
+                </div>
+                <Slider
+                  value={tipPercentage}
+                  onValueChange={setTipPercentage}
+                  max={25}
+                  min={2}
+                  step={0.5}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>2%</span>
+                  <span>25%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Method */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900">Payment method</h4>
+
+              <div className="space-y-3">
+                <div
+                  className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${paymentMethod === 'momo' ? 'border-blue-500 bg-blue-50' : ''}`}
+                  onClick={() => handlePaymentMethodSelect('momo')}
+                  tabIndex={0}
+                  role="button"
+                  aria-pressed={paymentMethod === 'momo'}
+                >
+                  <RadioGroupItem value="momo" id="momo" checked={paymentMethod === 'momo'} readOnly />
+                  <Smartphone className="h-5 w-5 text-blue-600" />
+                  <Label htmlFor="momo" className="flex-1 cursor-pointer">
+                    Mobile Money
+                  </Label>
+                </div>
+                <div
+                  className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : ''}`}
+                  onClick={() => handlePaymentMethodSelect('card')}
+                  tabIndex={0}
+                  role="button"
+                  aria-pressed={paymentMethod === 'card'}
+                >
+                  <RadioGroupItem value="card" id="card" checked={paymentMethod === 'card'} readOnly />
+                  <CreditCard className="h-5 w-5 text-gray-600" />
+                  <Label htmlFor="card" className="flex-1 cursor-pointer">
+                    Credit or debit
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            {/* MoMo Fields - only show if paymentMethod is momo */}
+            {paymentMethod === 'momo' && (
+              <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
+                <div>
+                  <Label htmlFor="customer" className="block mb-1 font-medium">Customer Name</Label>
+                  <Input
+                    id="customer"
+                    name="customer"
+                    value={momoFields.customer}
+                    onChange={e => setMomoFields(f => ({ ...f, customer: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="msisdn" className="block mb-1 font-medium">Phone</Label>
+                  <Input
+                    id="msisdn"
+                    name="msisdn"
+                    value={momoFields.msisdn}
+                    onChange={e => setMomoFields(f => ({ ...f, msisdn: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="network" className="block mb-1 font-medium">Network</Label>
+                  <Input
+                    id="network"
+                    name="network"
+                    value={momoFields.network}
+                    readOnly
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="narration" className="block mb-1 font-medium">Narration</Label>
+                  <Input
+                    id="narration"
+                    name="narration"
+                    value={momoFields.narration}
+                    onChange={e => setMomoFields(f => ({ ...f, narration: e.target.value }))}
+                    placeholder="e.g. Debit MTN Customer"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="momo-amount" className="block mb-1 font-medium">Amount (Total Due Today)</Label>
+                  <Input
+                    id="momo-amount"
+                    name="momo-amount"
+                    value={formatCurrency(getTotalAmount())}
+                    readOnly
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Privacy Options */}
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <Checkbox id="anonymous" checked={isAnonymous} onChange={e => setIsAnonymous(e.target.checked)} className="mt-0.5" />
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="anonymous" className="text-sm text-gray-700 cursor-pointer">
+                    Don't display my name publicly on the fundraiser.
+                  </Label>
+                  <Info className="h-4 w-4 text-gray-400" />
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="marketing"
+                  checked={marketingUpdates}
+                  onChange={e => setMarketingUpdates(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="marketing" className="text-sm text-gray-700 cursor-pointer">
+                  Get occasional marketing updates from WaltergateFund. You may unsubscribe at any time.
+                </Label>
+              </div>
+            </div>
+
+            {/* Donation Summary */}
+            <div className="border-t pt-4 space-y-2">
+              <h4 className="font-semibold text-gray-900 mb-3">Your donation</h4>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Your donation</span>
+                <span className="font-medium">{formatCurrency(getDonationAmount())}</span>
+              </div>
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">WaltergateFund tip</span>
+                <span className="font-medium">{formatCurrency(getTipAmount())}</span>
+              </div>
+
+              <div className="border-t pt-2 mt-3">
+                <div className="flex justify-between font-semibold">
+                  <span>Total due today</span>
+                  <span className="text-lg">{formatCurrency(getTotalAmount())}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
+              disabled={getDonationAmount() === 0}
+            >
+              Donate now
+            </Button>
+
+            <p className="text-xs text-gray-500 text-center leading-relaxed">
+              By continuing, you agree with WaltergateFund's Terms and Privacy Policy, and WaltergateFund's Terms of Service.
+            </p>
+          </div>
+        </form>
+      </div>
+    </>
+  )
+}
