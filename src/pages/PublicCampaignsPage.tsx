@@ -305,7 +305,7 @@ export default function PublicCampaignsPage() {
                   {filteredCampaigns.map((campaign) => (
                     <Link
                       key={campaign.id}
-                      to={`/campaign/${campaign.id}`}
+                      to={`/campaign/${campaign.slug}`}
                       className="card bg-white overflow-hidden transform transition-all duration-300 hover:-translate-y-2 block group text-base md:text-lg shadow-lg rounded-xl min-h-[420px]"
                       style={{ textDecoration: 'none' }}
                     >
@@ -355,7 +355,7 @@ export default function PublicCampaignsPage() {
                             className="text-primary-500 font-medium hover:underline cursor-pointer bg-transparent border-none p-0"
                             onClick={e => {
                               e.preventDefault();
-                              window.location.href = `/campaign/${campaign.id}`;
+                              window.location.href = `/campaign/${campaign.slug}`;
                             }}
                           >
                             View Details

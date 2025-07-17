@@ -94,12 +94,12 @@ const App: React.FC = () => {
               <ContactPage />
             </PublicRoute>
           } />
-          <Route path="/DonationsForm" element={
+          <Route path="/DonationsPage/:slug" element={
             <PublicRoute>
               <DonationsPage />
             </PublicRoute>
           } />
-          <Route path="/campaign/:id" element={<CampaignDetailsPage />} />
+          <Route path="/campaign/:slug" element={<CampaignDetailsPage />} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={

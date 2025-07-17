@@ -58,15 +58,24 @@ interface Donation {
 }
 
 export default function CampaignDetailsPage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [campaign, setCampaign] = useState<Campaign | null>(null)
-  const [donations, setDonations] = useState<Donation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [shareModalOpen, setShareModalOpen] = useState(false)
-  const [copySuccess, setCopySuccess] = useState(false)
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  // Add state for image error
+  const [imgError, setImgError] = useState(false);
+  // Add new state for recent donations and stats
+  const [recentStats, setRecentStats] = useState<{
+    totalRaised: string;
+    goalAmount: string;
+    totalDonations: number;
+    recentDonations: any[];
+  } | null>(null);
 
   // Mock recent donations data
   const mockDonations: Donation[] = [
@@ -98,31 +107,41 @@ export default function CampaignDetailsPage() {
 
   useEffect(() => {
     const fetchCampaign = async () => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/public`)
-        const data = await response.json()
-        const campaignsData = Array.isArray(data) ? data : data.data || []
-        const foundCampaign = campaignsData.find((c: Campaign) => c.id === Number(id))
-
-        if (foundCampaign) {
-          setCampaign(foundCampaign)
-          setDonations(mockDonations)
-        } else {
-          setError("Campaign not found")
-        }
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${slug}`);
+        if (!response.ok) throw new Error('Failed to fetch campaign');
+        const data = await response.json();
+        setCampaign(data); // API returns the campaign object directly
+        setDonations(mockDonations);
       } catch (e: any) {
-        setError("Failed to fetch campaign details")
+        setError('Failed to fetch campaign details');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    if (id) {
-      fetchCampaign()
+    const fetchRecentDonations = async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${slug}/donations/recent`);
+        if (!res.ok) throw new Error('Failed to fetch recent donations');
+        const stats = await res.json();
+        setRecentStats(stats);
+        if (!stats.recentDonations || stats.recentDonations.length === 0) {
+          console.warn('No recent donations found for this campaign:', slug);
+        }
+      } catch (e) {
+        setRecentStats(null);
+        console.error('Error fetching recent donations:', e);
+      }
+    };
+
+    if (slug) {
+      fetchCampaign();
+      fetchRecentDonations();
     }
-  }, [id])
+  }, [slug]);
 
   const formatCurrency = (amount: string) => {
     return new Intl.NumberFormat("en-GH", {
@@ -168,8 +187,11 @@ export default function CampaignDetailsPage() {
   }
 
   const handleDonate = () => {
-    navigate('/DonationsForm')
-  }
+    if (campaign?.slug) {
+      localStorage.setItem('last_campaign_slug', campaign.slug);
+      navigate(`/DonationsPage/${campaign.slug}`);
+    }
+  };
 
   const handleShare = (platform: string) => {
     const url = getCurrentUrl()
@@ -191,11 +213,12 @@ export default function CampaignDetailsPage() {
     }
   }
 
+  // Replace the getImageUrl function with the one from PublicCampaignsPage.tsx
   const getImageUrl = (url: string | null) => {
-    if (!url) return "/placeholder.svg?height=400&width=600"
-    if (url.startsWith("http")) return url
-    return `http://127.0.0.1:8000${url}`
-  }
+    if (!url) return "/placeholder.svg?height=200&width=400";
+    if (url.startsWith("http")) return url;
+    return `http://127.0.0.1:8000${url}`;
+  };
 
   // Add a toast for download success (optional, simple alert for now)
   const handleToast = (msg: string) => alert(msg);
@@ -300,14 +323,24 @@ export default function CampaignDetailsPage() {
                   src={getImageUrl(campaign.image_url)}
                   alt={campaign.title}
                   className="w-full h-96 object-cover rounded-lg"
+                  onError={e => {
+                    setImgError(true);
+                    console.error('Image failed to load:', getImageUrl(campaign.image_url));
+                  }}
+                  style={imgError ? { display: 'none' } : {}}
                 />
+                {imgError && (
+                  <div className="w-full h-96 flex items-center justify-center bg-gray-100 rounded-lg">
+                    <span className="text-gray-400">Image not available</span>
+                  </div>
+                )}
               </div>
               {/* Organizer Info */}
               <div className="flex items-center space-x-3">
                 <HumanIcon size="md" isOrganizer={true} />
                 <div>
                   <p className="text-gray-600">
-                    <span className="font-semibold">{campaign.user.name}</span> is organizing this fundraiser.
+                    <span className="font-semibold">{campaign.user?.name || 'the beneficiary'}</span> is organizing this fundraiser.
                   </p>
                 </div>
               </div>
@@ -362,8 +395,8 @@ export default function CampaignDetailsPage() {
 
                   {/* Goal and Donations Count */}
                   <div className="text-sm text-gray-600">
-                    <span className="font-semibold">{formatGoalAmount(campaign.goal_amount)}</span> goal •{" "}
-                    <span className="font-semibold">{getDonationCount().toLocaleString()}</span> donations
+                    <span className="font-semibold">{recentStats?.goalAmount ? formatGoalAmount(recentStats.goalAmount) : formatGoalAmount(campaign.goal_amount)}</span> goal •{" "}
+                    <span className="font-semibold">{recentStats?.totalDonations ?? 0}</span> donations
                   </div>
 
                   {/* Action Buttons */}
@@ -388,38 +421,27 @@ export default function CampaignDetailsPage() {
                     <div className="flex items-center space-x-2 mb-4">
                       <TrendingUp className="h-4 w-4 text-purple-600" />
                       <span className="text-sm font-semibold text-purple-600">
-                        {donations.length} people just donated
+                        {recentStats?.recentDonations?.length ?? 0} people just donated
                       </span>
                     </div>
-
                     {/* Recent Donations */}
                     <div className="space-y-3">
-                      {donations.map((donation) => (
-                        <div key={donation.id} className="flex items-center space-x-3">
-                          <HumanIcon
-                            size="sm"
-                            isAnonymous={donation.is_anonymous}
-                          />
+                      {(recentStats?.recentDonations || []).slice(0, 5).map((donation, idx) => (
+                        <div key={donation.id || idx} className="flex items-center space-x-3">
+                          <HumanIcon size="sm" isAnonymous={!donation.user_id} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-gray-900 truncate">{donation.donor_name}</p>
-                              <p className="text-sm text-gray-500">{formatCurrency(donation.amount)}</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {donation.user_id ? (donation.donor_name || 'Anonymous') : 'Anonymous'} donated {formatCurrency(donation.amount)}
+                              </p>
                             </div>
-                            <p className="text-xs text-gray-500">{donation.message}</p>
+                            <p className="text-xs text-gray-500">{donation.contribution_date}</p>
                           </div>
                         </div>
                       ))}
-                    </div>
-
-                    {/* See All/Top Buttons */}
-                    <div className="flex space-x-2 mt-4">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        See all
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        See top
-                      </Button>
+                      {(!recentStats?.recentDonations || recentStats.recentDonations.length === 0) && (
+                        <div className="text-gray-400 text-sm">No recent contributions found.</div>
+                      )}
                     </div>
                   </div>
                 </CardContent>

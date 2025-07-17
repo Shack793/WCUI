@@ -44,7 +44,7 @@ interface Campaign {
 }
 
 export default function DonationForm(props: any) {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(false);
@@ -141,17 +141,21 @@ export default function DonationForm(props: any) {
       } catch (err: any) {
         lastApiError = err?.response?.data;
         let errorMsg = '';
+        let isSpecificMoMoFailure = false;
         if (err.response) {
           errorMsg = `API Error: ${JSON.stringify(err.response.data)}`;
-          console.error('API Error Response:', err.response.data);
-          toast({ title: 'Payment Error', description: errorMsg });
+          // Check for errorCode 100 Transaction Failed
+          if (err.response.data && err.response.data.errorCode === '100' && err.response.data.error === 'Transaction Failed') {
+            isSpecificMoMoFailure = true;
+            toast({ title: 'Payment Error', description: 'Transaction Failed. Please try again or use a different payment method.' });
+          } else {
+            toast({ title: 'Payment Error', description: errorMsg });
+          }
         } else if (err.request) {
           errorMsg = 'No response from server. Please check your network or server logs.';
-          console.error('API No Response:', err.request);
           toast({ title: 'Payment Error', description: errorMsg });
         } else {
           errorMsg = `Network Error: ${err.message}`;
-          console.error('API Error:', err.message);
           toast({ title: 'Payment Error', description: errorMsg });
         }
         lastToastError = errorMsg;
@@ -161,17 +165,17 @@ export default function DonationForm(props: any) {
         } catch (storageErr) {
           console.error('Failed to cache error:', storageErr);
         }
-        // If not the specific MoMo failure, attempt guest donation
-        if (!(lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed')) {
+        // If error is not the specific MoMo failure, or is 'Unknown error', attempt guest donation
+        if (!isSpecificMoMoFailure && (errorMsg === 'Unknown error' || !(lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed'))) {
           shouldAttemptGuestDonation = true;
         }
       }
 
       // If error is not the specific MoMo failure, make guest contribution
       const isSpecificMoMoFailure = lastToastError && lastToastError.includes('errorCode') && lastToastError.includes('100') && lastToastError.includes('Transaction Failed');
-      if (!isSpecificMoMoFailure && shouldAttemptGuestDonation && id) {
+      if (!isSpecificMoMoFailure && shouldAttemptGuestDonation && campaign?.id) {
         try {
-          const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${id}/donate/guest`, {
+          const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${campaign.id}/donate/guest`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -190,8 +194,8 @@ export default function DonationForm(props: any) {
         } catch (guestErr: any) {
           toast({ title: 'Donation Record Error', description: guestErr.message || 'Failed to record donation.' });
         }
-        if (id) localStorage.setItem('last_campaign_id', id.toString());
-        navigate(`/campaign/${id}`);
+        if (campaign?.id) localStorage.setItem('last_campaign_id', campaign.id.toString());
+        navigate(`/campaign/${campaign.id}`);
         return;
       }
 
@@ -203,9 +207,9 @@ export default function DonationForm(props: any) {
           toast({ title: 'Final Payment Status', description: `Status: ${checkData.status}` });
           // If NOT the specific MoMo failure, update contribution
           const isFailed = lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed';
-          if (!isFailed && id) {
+          if (!isFailed && campaign?.id) {
             // You may want to collect name/email from user, here using placeholders
-            const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${id}/donate/guest`, {
+            const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${campaign.id}/donate/guest`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -223,17 +227,23 @@ export default function DonationForm(props: any) {
             }
           }
           // Store last campaign id before redirect
-          if (id) localStorage.setItem('last_campaign_id', id.toString());
-          navigate(`/campaign/${id}`);
+          if (campaign?.id) {
+            localStorage.setItem('last_campaign_id', campaign.id.toString());
+            navigate(`/campaign/${campaign.id}`);
+          }
         } catch (checkErr: any) {
           toast({ title: 'Status Check Error', description: checkErr.message || 'Failed to check payment status.' });
-          if (id) localStorage.setItem('last_campaign_id', id.toString());
-          navigate(`/campaign/${id}`);
+          if (campaign?.id) {
+            localStorage.setItem('last_campaign_id', campaign.id.toString());
+            navigate(`/campaign/${campaign.id}`);
+          }
         }
       } else {
         // If no transactionId, just redirect
-        if (id) localStorage.setItem('last_campaign_id', id.toString());
-        navigate(`/campaign/${id}`);
+        if (campaign?.id) {
+          localStorage.setItem('last_campaign_id', campaign.id.toString());
+          navigate(`/campaign/${campaign.id}`);
+        }
       }
       return;
     }
@@ -254,20 +264,29 @@ export default function DonationForm(props: any) {
   }
 
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
     setLoading(true);
     setError(null);
     fetch('http://127.0.0.1:8000/api/v1/campaigns/public')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch campaign');
+        return res.json();
+      })
       .then(data => {
         const campaignsData = Array.isArray(data) ? data : data.data || [];
-        const found = campaignsData.find((c: Campaign) => c.id === Number(id));
+        const found = campaignsData.find((c: Campaign) => c.slug === slug);
         if (found) setCampaign(found);
         else setError('Campaign not found');
       })
       .catch(() => setError('Failed to fetch campaign details'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [slug]);
+
+  useEffect(() => {
+    if (error) {
+      console.error('Campaign details error:', { error, campaign });
+    }
+  }, [error, campaign]);
 
   // Network auto-detection for MoMo
   useEffect(() => {
@@ -327,6 +346,16 @@ export default function DonationForm(props: any) {
         <form onSubmit={handleSubmit}>
           {/* Campaign Details (inside form, always visible if campaign loaded) */}
           <div className="flex items-center p-4 border-b mb-4 min-h-[80px]">
+            {error && (
+              <div className="w-full text-center text-red-500">{error} <br />
+                <span style={{ fontSize: '0.8em' }}>
+                  {campaign === null ? 'campaign is null' : ''}
+                  {campaign && !campaign.image_url ? 'image_url missing. ' : ''}
+                  {campaign && !campaign.user ? 'user missing. ' : ''}
+                  {campaign && campaign.user && !campaign.user.name ? 'user.name missing. ' : ''}
+                </span>
+              </div>
+            )}
             {campaign ? (
               <>
                 <img
@@ -398,7 +427,7 @@ export default function DonationForm(props: any) {
               </div>
 
               <p className="text-sm text-gray-600 leading-relaxed">
-                WaltergateFund has a 0% platform fee for organizers. WaltergateFund will continue offering its services thanks to
+                WGCrowdfunding has a 0% platform fee for organizers. WGCrowdfunding will continue offering its services thanks to
                 donors who will leave an optional amount here:
               </p>
 
@@ -531,7 +560,7 @@ export default function DonationForm(props: any) {
                   className="mt-0.5"
                 />
                 <Label htmlFor="marketing" className="text-sm text-gray-700 cursor-pointer">
-                  Get occasional marketing updates from WaltergateFund. You may unsubscribe at any time.
+                  Get occasional marketing updates from WGCrowdfunding. You may unsubscribe at any time.
                 </Label>
               </div>
             </div>
@@ -545,10 +574,10 @@ export default function DonationForm(props: any) {
                 <span className="font-medium">{formatCurrency(getDonationAmount())}</span>
               </div>
 
-              <div className="flex justify-between text-sm">
+            {/*  <div className="flex justify-between text-sm">
                 <span className="text-gray-600">WaltergateFund tip</span>
                 <span className="font-medium">{formatCurrency(getTipAmount())}</span>
-              </div>
+              </div>*/}
 
               <div className="border-t pt-2 mt-3">
                 <div className="flex justify-between font-semibold">
@@ -568,7 +597,7 @@ export default function DonationForm(props: any) {
             </Button>
 
             <p className="text-xs text-gray-500 text-center leading-relaxed">
-              By continuing, you agree with WaltergateFund's Terms and Privacy Policy, and WaltergateFund's Terms of Service.
+              By continuing, you agree with WGCrowdfunding's Terms and Privacy Policy, .
             </p>
           </div>
         </form>

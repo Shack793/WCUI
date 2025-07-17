@@ -100,7 +100,7 @@ const TrendingCampaigns: React.FC = () => {
             campaigns.map((campaign) => (
               <Link
                 key={campaign.id}
-                to={`/campaign/${campaign.id}`}
+                to={`/campaign/${campaign.slug}`}
                 className="card bg-white overflow-hidden transform transition-all duration-300 hover:-translate-y-2 block group"
                 style={{ textDecoration: 'none' }}
               >
@@ -150,7 +150,7 @@ const TrendingCampaigns: React.FC = () => {
                       className="text-primary-500 font-medium hover:underline cursor-pointer bg-transparent border-none p-0"
                       onClick={e => {
                         e.preventDefault();
-                        navigate(`/campaign/${campaign.id}`);
+                        navigate(`/campaign/${campaign.slug}`);
                       }}
                     >
                       View Details
