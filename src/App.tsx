@@ -94,10 +94,11 @@ const App: React.FC = () => {
               <ContactPage />
             </PublicRoute>
           } />
+          <Route path="/donate/:slug" element={
+            <DonationsPage />
+          } />
           <Route path="/DonationsPage/:slug" element={
-            <PublicRoute>
-              <DonationsPage />
-            </PublicRoute>
+            <DonationsPage />
           } />
           <Route path="/campaign/:slug" element={<CampaignDetailsPage />} />
 

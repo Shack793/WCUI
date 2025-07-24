@@ -29,8 +29,11 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Only handle 401 if not already on login page and not on a public route
-      const publicRoutes = ['/', '/about', '/campaign', '/faq', '/volunteer', '/success-story', '/all-campaigns'];
-      const isPublicRoute = publicRoutes.some(route => window.location.pathname === route);
+      const publicRoutes = ['/', '/about', '/campaign', '/faq', '/volunteer', '/success-story', '/all-campaigns', '/public-campaigns', '/upcoming-campaigns', '/contact'];
+      const isPublicRoute = publicRoutes.some(route => window.location.pathname === route) 
+        || window.location.pathname.startsWith('/donate/') 
+        || window.location.pathname.startsWith('/DonationsPage/')
+        || window.location.pathname.startsWith('/campaign/');
       
       if (!window.location.pathname.includes('/login') && !isPublicRoute) {
         // Clear token

@@ -189,7 +189,7 @@ export default function CampaignDetailsPage() {
   const handleDonate = () => {
     if (campaign?.slug) {
       localStorage.setItem('last_campaign_slug', campaign.slug);
-      navigate(`/DonationsPage/${campaign.slug}`);
+      navigate(`/donate/${campaign.slug}`);
     }
   };
 
@@ -306,7 +306,7 @@ export default function CampaignDetailsPage() {
           </Button>
           {/* Campaign Title */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{campaign.title}</h1>
+            <h1 className="text-base md:text-2xl font-bold text-gray-900 mb-4">{campaign.title}</h1>
             {campaign.is_boosted && (
               <div className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
                 <span className="mr-2">⭐</span>

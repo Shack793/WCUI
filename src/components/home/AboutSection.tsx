@@ -4,25 +4,25 @@ import { CheckCircle } from 'lucide-react';
 
 const AboutSection: React.FC = () => {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-8 sm:py-12 md:py-16 bg-white">
       <div className="container-custom">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
+          <div className="rounded-lg overflow-hidden order-2 lg:order-1">
             <img
               src="https://images.pexels.com/photos/1250452/pexels-photo-1250452.jpeg?auto=compress&cs=tinysrgb&w=1600"
               alt="Child in need"
-              className="w-full h-auto object-cover rounded-lg transform transition-transform duration-500 hover:scale-105"
+              className="w-full h-48 sm:h-64 md:h-auto object-cover rounded-lg transform transition-transform duration-500 hover:scale-105"
             />
           </div>
           
-          <div>
-            <h2 className="text-3xl font-bold mb-6 text-gray-800">Turning Hope into Action – One Cedi at a Time</h2>
-            <div className="text-gray-600 space-y-4 mb-6">
-              <p className="font-medium text-lg">
+          <div className="order-1 lg:order-2">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 leading-tight">Turning Hope into Action – One Cedi at a Time</h2>
+            <div className="text-gray-600 space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+              <p className="font-medium text-base sm:text-lg">
                 Welcome to WG Crowdfunding – Ghana's Most Trusted Donation Platform.
               </p>
               
-              <p className="leading-relaxed">
+              <p className="leading-relaxed text-sm sm:text-base">
                 Whether you're raising funds for a loved one's funeral, a Church building project, 
                 your Alma mater's anniversary, a life-saving surgery, or a small business dream,
                 WG Crowdfunding is here to help you make it happen — securely, locally, and globally.
@@ -33,39 +33,35 @@ const AboutSection: React.FC = () => {
               </p>
             </div>
             
-            <div className="space-y-4 mb-8">
+                        <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
               <div className="flex items-start">
-                <CheckCircle className="text-primary-500 mr-3 mt-1 flex-shrink-0" size={20} />
-                <p className="text-gray-700">
-                  Local. Global. Limitless.
-                  Whether your supporters are in Kumasi, Kasoa, or Canada, they can easily donate using their preferred method — and you’ll get notified instantly.
-
+                <CheckCircle className="text-primary-500 mr-2 sm:mr-3 mt-1 flex-shrink-0" size={18} />
+                <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                  <span className="font-semibold">Local. Global. Limitless.</span><br />
+                  Whether your supporters are in Kumasi, Kasoa, or Canada, they can easily donate using their preferred method — and you'll get notified instantly.
                 </p>
               </div>
               
               <div className="flex items-start">
-                <CheckCircle className="text-primary-500 mr-3 mt-1 flex-shrink-0" size={20} />
-                <p className="text-gray-700">
-                  Full Transparency. Total Control.
+                <CheckCircle className="text-primary-500 mr-2 sm:mr-3 mt-1 flex-shrink-0" size={18} />
+                <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                  <span className="font-semibold">Full Transparency. Total Control.</span><br />
                   Track every cedi. Download detailed reports. See who gave what, when, and how. Accountability has never been this easy.
-
                 </p>
               </div>
               
               <div className="flex items-start">
-                <CheckCircle className="text-primary-500 mr-3 mt-1 flex-shrink-0" size={20} />
-                <p className="text-gray-700">
-                  Bulk SMS with a Human Touch
-                  Send customized reminders and heartfelt "thank you" messages — automatically personalized with each donor’s name. No stress, no sweat.
-
+                <CheckCircle className="text-primary-500 mr-2 sm:mr-3 mt-1 flex-shrink-0" size={18} />
+                <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+                  <span className="font-semibold">Bulk SMS with a Human Touch</span><br />
+                  Send customized reminders and heartfelt "thank you" messages — automatically personalized with each donor's name. No stress, no sweat.
                 </p>
               </div>
-              
             </div>
             
             <Link 
               to="/public-campaigns" 
-              className="btn btn-primary inline-block"
+              className="btn btn-primary inline-block w-full sm:w-auto text-center px-6 py-3 text-sm sm:text-base"
             >
               EXPLORE CAMPAIGNS
             </Link>

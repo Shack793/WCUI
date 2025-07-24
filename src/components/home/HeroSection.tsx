@@ -60,7 +60,7 @@ const HeroSection: React.FC = () => {
   }, [currentSlide]);
 
   return (
-    <section className="relative h-screen overflow-hidden">
+    <section className="relative h-screen sm:h-screen overflow-hidden">
       {/* Slides */}
       <div className="relative h-full">
         {heroSlides.map((slide, index) => (
@@ -71,19 +71,19 @@ const HeroSection: React.FC = () => {
             }`}
           >
             <div
-              className="absolute inset-0 bg-cover bg-center"
+              className="absolute inset-0 bg-cover bg-center sm:bg-center bg-top"
               style={{ backgroundImage: `url(${slide.image})` }}
             >
-              <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+              <div className="absolute inset-0 bg-black bg-opacity-40 sm:bg-opacity-50"></div>
             </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 md:px-8">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 max-w-3xl">{slide.title}</h1>
-              <p className="text-lg md:text-xl mb-8 max-w-2xl">{slide.description}</p>
-              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                <Link to="/login" className="btn btn-primary">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 sm:px-6 md:px-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 max-w-xs sm:max-w-2xl md:max-w-3xl leading-tight">{slide.title}</h1>
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-sm sm:max-w-xl md:max-w-2xl leading-relaxed">{slide.description}</p>
+              <div className="flex flex-col w-full max-w-xs sm:max-w-sm sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                <Link to="/login" className="btn btn-primary w-full sm:w-auto px-6 py-3 text-sm sm:text-base">
                   JOIN WITH US
                 </Link>
-                <Link to="/public-campaigns" className="btn btn-secondary">
+                <Link to="/public-campaigns" className="btn btn-secondary w-full sm:w-auto px-6 py-3 text-sm sm:text-base">
                   EXPLORE CAMPAIGN
                 </Link>
               </div>
@@ -97,20 +97,36 @@ const HeroSection: React.FC = () => {
         onClick={() => {
           prevSlide();
         }}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full hover:bg-opacity-50 transition"
+        className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-1.5 sm:p-2 rounded-full hover:bg-opacity-50 transition z-10"
         aria-label="Previous slide"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
       </button>
       <button
         onClick={() => {
           nextSlide();
         }}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-2 rounded-full hover:bg-opacity-50 transition"
+        className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 text-white p-1.5 sm:p-2 rounded-full hover:bg-opacity-50 transition z-10"
         aria-label="Next slide"
       >
-        <ChevronRight size={24} />
+        <ChevronRight size={20} className="sm:w-6 sm:h-6" />
       </button>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+        {heroSlides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+              index === currentSlide 
+                ? 'bg-white scale-110' 
+                : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
     </section>
   );
 };

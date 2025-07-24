@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,7 +45,6 @@ interface Campaign {
 
 export default function DonationForm(props: any) {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +194,7 @@ export default function DonationForm(props: any) {
           toast({ title: 'Donation Record Error', description: guestErr.message || 'Failed to record donation.' });
         }
         if (campaign?.id) localStorage.setItem('last_campaign_id', campaign.id.toString());
-        navigate(`/campaign/${campaign.id}`);
+        // Stay on donations page instead of redirecting
         return;
       }
 
@@ -226,23 +225,20 @@ export default function DonationForm(props: any) {
               toast({ title: 'Donation Record Error', description: guestDonationData.message || 'Failed to record donation.' });
             }
           }
-          // Store last campaign id before redirect
+          // Store last campaign id but stay on donations page
           if (campaign?.id) {
             localStorage.setItem('last_campaign_id', campaign.id.toString());
-            navigate(`/campaign/${campaign.id}`);
           }
         } catch (checkErr: any) {
           toast({ title: 'Status Check Error', description: checkErr.message || 'Failed to check payment status.' });
           if (campaign?.id) {
             localStorage.setItem('last_campaign_id', campaign.id.toString());
-            navigate(`/campaign/${campaign.id}`);
           }
         }
       } else {
-        // If no transactionId, just redirect
+        // If no transactionId, stay on donations page
         if (campaign?.id) {
           localStorage.setItem('last_campaign_id', campaign.id.toString());
-          navigate(`/campaign/${campaign.id}`);
         }
       }
       return;
