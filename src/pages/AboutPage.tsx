@@ -1,40 +1,9 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
 const AboutPage: React.FC = () => {
-  const [currentReview, setCurrentReview] = useState(0);
-
-  const reviews = [
-    {
-      name: "John Doe",
-      role: "Web Developer",
-      text: "Choosing Charity for our campaign was the best decision we made. Their team's professionalism and creativity brought our vision to life in ways we never imagined. From the initial brainstorming sessions to the final execution, they were with us every step of the way, ensuring every detail was perfect.",
-      image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300"
-    },
-    {
-      name: "Sarah Johnson",
-      role: "Non-Profit Director",
-      text: "The platform exceeded our expectations in every way. The user-friendly interface and powerful features helped us reach our fundraising goals faster than we thought possible. Highly recommended!",
-      image: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300"
-    },
-    {
-      name: "Michael Chen",
-      role: "Community Organizer",
-      text: "WaltergateFund made it incredibly easy to connect with donors and share our story. The analytics tools helped us understand our audience better and optimize our campaigns.",
-      image: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=300"
-    }
-  ];
-
-  const nextReview = () => {
-    setCurrentReview((prev) => (prev + 1) % reviews.length);
-  };
-
-  const prevReview = () => {
-    setCurrentReview((prev) => (prev - 1 + reviews.length) % reviews.length);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -135,83 +104,7 @@ const AboutPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Client Reviews Section */}
-      <div className="bg-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-800 mb-4">Client's Review</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Discover what our valued clients have to say about their experiences with 
-              us. Browse through authentic reviews and testimonials that highlight the 
-              quality of our services.
-            </p>
-          </div>
-
-          {/* Review Card */}
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gray-50 rounded-2xl p-8 relative">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <div className="flex mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-[#37b7ff] text-[#37b7ff]" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                    {reviews[currentReview].text}
-                  </p>
-                  <div>
-                    <h4 className="font-bold text-gray-800 text-lg">
-                      {reviews[currentReview].name}
-                    </h4>
-                    <p className="text-gray-600">{reviews[currentReview].role}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-center">
-                  <div className="relative">
-                    <img 
-                      src={reviews[currentReview].image}
-                      alt={reviews[currentReview].name}
-                      className="w-48 h-56 object-cover rounded-lg shadow-lg"
-                    />
-                    <div className="absolute -bottom-4 -right-4 bg-[#37b7ff] p-3 rounded-full">
-                      <Star className="w-6 h-6 text-white fill-white" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation Arrows */}
-              <button 
-                onClick={prevReview}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white hover:bg-gray-100 p-3 rounded-full shadow-lg transition-colors duration-300"
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-600" />
-              </button>
-              <button 
-                onClick={nextReview}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-[#37b7ff] hover:bg-[#2a8fc7] p-3 rounded-full shadow-lg transition-colors duration-300"
-              >
-                <ChevronRight className="w-6 h-6 text-white" />
-              </button>
-            </div>
-
-            {/* Review Indicators */}
-            <div className="flex justify-center mt-6 space-x-2">
-              {reviews.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentReview(index)}
-                  className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                    index === currentReview ? 'bg-[#37b7ff]' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };

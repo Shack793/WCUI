@@ -113,8 +113,11 @@ const FaqPage: React.FC = () => {
                 <button
                   onClick={() => toggleExpanded(item.id)}
                   className={`w-full px-6 py-4 text-left flex items-center justify-between transition-colors duration-200 ${
-                    expandedItem === item.id ? "bg-green-500 text-white" : "bg-white text-gray-800 hover:bg-gray-50"
+                    expandedItem === item.id ? "text-white" : "bg-white text-gray-800 hover:bg-gray-50"
                   }`}
+                  style={{
+                    backgroundColor: expandedItem === item.id ? "#37b7ff" : "white"
+                  }}
                 >
                   <span className="font-medium">{item.question}</span>
                   {expandedItem === item.id ? (

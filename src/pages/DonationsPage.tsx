@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,8 +45,10 @@ interface Campaign {
 
 export default function DonationForm(props: any) {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(false);
+  const [donationLoading, setDonationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAmount, setSelectedAmount] = useState<string>("")
   const [customAmount, setCustomAmount] = useState<string>("")
@@ -99,6 +101,7 @@ export default function DonationForm(props: any) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setDonationLoading(true);
 
     if (paymentMethod === 'momo') {
       const momoPayload: DebitWalletPayload = {
@@ -117,24 +120,45 @@ export default function DonationForm(props: any) {
       try {
         console.log('Sending MoMo payload:', momoPayload);
         const res = await paymentsApi.debitWallet(momoPayload);
-        const data = res.data;
+        const data = res.data as any; // Using any to handle the actual API response structure
         console.log('MoMo API response:', data);
-        transactionId = data.transactionId;
-        if (transactionId) {
-          toast({ title: 'Payment Initiated', description: 'Check your phone to approve payment.' });
-          // Poll for status
-          let pollCount = 0;
-          while (status === 'pending' && pollCount < 10) {
-            await new Promise(r => setTimeout(r, 3000));
-            statusRes = await paymentsApi.checkStatus(transactionId);
-            status = statusRes.data.status;
-            toast({ title: 'Payment Status', description: `Status: ${status}` });
-            pollCount++;
+        
+        // Check if the response indicates success (errorCode: "000")
+        if (data.errorCode === "000" && data.error === null) {
+          transactionId = data.data?.transactionId;
+          if (transactionId) {
+            console.log('Payment initiated successfully, checking phone for approval...');
+            // Check status 2 times with the refNo
+            const refNo = data.data?.refNo || transactionId;
+            let pollCount = 0;
+            while (pollCount < 2) {
+              await new Promise(r => setTimeout(r, 3000));
+              try {
+                statusRes = await paymentsApi.checkStatus(refNo);
+                status = statusRes.data.status || statusRes.data.transactionStatus;
+                console.log(`Status check ${pollCount + 1}: ${status}`);
+              } catch (statusErr) {
+                console.error('Status check error:', statusErr);
+                console.log('Status check failed, proceeding...');
+              }
+              pollCount++;
+            }
+          } else {
+            lastToastError = 'No transaction ID received';
+            console.error('Payment Error:', lastToastError);
+            shouldAttemptGuestDonation = true;
           }
+        } else if (data.errorCode === "100") {
+          // Handle error code 100 - Transaction Failed
+          lastApiError = data;
+          lastToastError = data.error || 'Transaction Failed';
+          toast({ title: 'Payment Error', description: 'Transaction Failed. Please try again or use a different payment method.' });
+          // Do NOT attempt guest donation for error code 100
+          shouldAttemptGuestDonation = false;
         } else {
-          lastToastError = data.message || 'Unknown error';
-          toast({ title: 'Payment Error', description: lastToastError });
-          // If no transactionId, but not the specific MoMo failure, attempt guest donation
+          // Handle other falcon pay errors
+          lastToastError = data.error || 'Unknown error';
+          console.error('Payment Error:', lastToastError);
           shouldAttemptGuestDonation = true;
         }
       } catch (err: any) {
@@ -142,20 +166,21 @@ export default function DonationForm(props: any) {
         let errorMsg = '';
         let isSpecificMoMoFailure = false;
         if (err.response) {
-          errorMsg = `API Error: ${JSON.stringify(err.response.data)}`;
-          // Check for errorCode 100 Transaction Failed
-          if (err.response.data && err.response.data.errorCode === '100' && err.response.data.error === 'Transaction Failed') {
+          const responseData = err.response.data;
+          errorMsg = `API Error: ${JSON.stringify(responseData)}`;
+          // Check for errorCode 100 Transaction Failed from falcon pay
+          if (responseData && responseData.errorCode === '100') {
             isSpecificMoMoFailure = true;
             toast({ title: 'Payment Error', description: 'Transaction Failed. Please try again or use a different payment method.' });
           } else {
-            toast({ title: 'Payment Error', description: errorMsg });
+            console.error('Payment Error:', errorMsg);
           }
         } else if (err.request) {
           errorMsg = 'No response from server. Please check your network or server logs.';
-          toast({ title: 'Payment Error', description: errorMsg });
+          console.error('Payment Error:', errorMsg);
         } else {
           errorMsg = `Network Error: ${err.message}`;
-          toast({ title: 'Payment Error', description: errorMsg });
+          console.error('Payment Error:', errorMsg);
         }
         lastToastError = errorMsg;
         // Cache error for debugging
@@ -164,17 +189,18 @@ export default function DonationForm(props: any) {
         } catch (storageErr) {
           console.error('Failed to cache error:', storageErr);
         }
-        // If error is not the specific MoMo failure, or is 'Unknown error', attempt guest donation
-        if (!isSpecificMoMoFailure && (errorMsg === 'Unknown error' || !(lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed'))) {
+        // If error is not the specific MoMo failure (errorCode 100), attempt guest donation
+        if (!isSpecificMoMoFailure) {
           shouldAttemptGuestDonation = true;
         }
       }
 
-      // If error is not the specific MoMo failure, make guest contribution
-      const isSpecificMoMoFailure = lastToastError && lastToastError.includes('errorCode') && lastToastError.includes('100') && lastToastError.includes('Transaction Failed');
-      if (!isSpecificMoMoFailure && shouldAttemptGuestDonation && campaign?.id) {
+      // Make guest donation for successful payments or unknown errors (but NOT for error code 100)
+      const isSpecificMoMoFailure = lastApiError && lastApiError.errorCode === '100';
+      if (!isSpecificMoMoFailure && (shouldAttemptGuestDonation || transactionId) && campaign?.slug) {
         try {
-          const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${campaign.id}/donate/guest`, {
+          console.log('Attempting guest donation...');
+          const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${campaign.slug}/donate/guest`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -187,60 +213,24 @@ export default function DonationForm(props: any) {
           const guestDonationData = await guestDonationRes.json();
           if (guestDonationRes.ok) {
             toast({ title: 'Donation Recorded', description: 'Thank you for your donation!' });
+            console.log('Guest donation successful, redirecting to campaign page...');
+            // Redirect to campaign detail page after successful donation
+            setTimeout(() => {
+              navigate(`/campaign/${campaign.slug}`);
+            }, 2000); // 2 second delay to show the success message
           } else {
-            toast({ title: 'Donation Record Error', description: guestDonationData.message || 'Failed to record donation.' });
+            console.error('Donation Record Error:', guestDonationData.message || 'Failed to record donation.');
           }
         } catch (guestErr: any) {
-          toast({ title: 'Donation Record Error', description: guestErr.message || 'Failed to record donation.' });
+          console.error('Donation Record Error:', guestErr.message || 'Failed to record donation.');
         }
-        if (campaign?.id) localStorage.setItem('last_campaign_id', campaign.id.toString());
-        // Stay on donations page instead of redirecting
-        return;
       }
 
-      // Always check status if transactionId exists
-      if (transactionId) {
-        try {
-          const checkRes = await paymentsApi.checkStatus(transactionId);
-          const checkData = checkRes.data;
-          toast({ title: 'Final Payment Status', description: `Status: ${checkData.status}` });
-          // If NOT the specific MoMo failure, update contribution
-          const isFailed = lastApiError && lastApiError.errorCode === '100' && lastApiError.error === 'Transaction Failed';
-          if (!isFailed && campaign?.id) {
-            // You may want to collect name/email from user, here using placeholders
-            const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${campaign.id}/donate/guest`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                payment_method_id: 1,
-                amount: getDonationAmount(),
-                name: momoFields.customer || 'John Doe',
-                email: 'john@example.com',
-              }),
-            });
-            const guestDonationData = await guestDonationRes.json();
-            if (guestDonationRes.ok) {
-              toast({ title: 'Donation Recorded', description: 'Thank you for your donation!' });
-            } else {
-              toast({ title: 'Donation Record Error', description: guestDonationData.message || 'Failed to record donation.' });
-            }
-          }
-          // Store last campaign id but stay on donations page
-          if (campaign?.id) {
-            localStorage.setItem('last_campaign_id', campaign.id.toString());
-          }
-        } catch (checkErr: any) {
-          toast({ title: 'Status Check Error', description: checkErr.message || 'Failed to check payment status.' });
-          if (campaign?.id) {
-            localStorage.setItem('last_campaign_id', campaign.id.toString());
-          }
-        }
-      } else {
-        // If no transactionId, stay on donations page
-        if (campaign?.id) {
-          localStorage.setItem('last_campaign_id', campaign.id.toString());
-        }
+      // Store campaign ID and clear loading state
+      if (campaign?.slug) {
+        localStorage.setItem('last_campaign_slug', campaign.slug);
       }
+      setDonationLoading(false);
       return;
     }
 
@@ -257,6 +247,7 @@ export default function DonationForm(props: any) {
     console.log("Donation submitted:", donationData)
     // Handle form submission here
     alert(`Thank you for your donation of ${formatCurrency(getTotalAmount())}!`)
+    setDonationLoading(false);
   }
 
   useEffect(() => {
@@ -484,7 +475,7 @@ export default function DonationForm(props: any) {
             {paymentMethod === 'momo' && (
               <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
                 <div>
-                  <Label htmlFor="customer" className="block mb-1 font-medium">Customer Name</Label>
+                  <Label htmlFor="customer" className="block mb-1 font-medium">Full Name</Label>
                   <Input
                     id="customer"
                     name="customer"
@@ -514,7 +505,7 @@ export default function DonationForm(props: any) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="narration" className="block mb-1 font-medium">Narration</Label>
+                  <Label htmlFor="narration" className="block mb-1 font-medium">Comment</Label>
                   <Input
                     id="narration"
                     name="narration"
@@ -525,7 +516,7 @@ export default function DonationForm(props: any) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="momo-amount" className="block mb-1 font-medium">Amount (Total Due Today)</Label>
+                  <Label htmlFor="momo-amount" className="block mb-1 font-medium">Amount</Label>
                   <Input
                     id="momo-amount"
                     name="momo-amount"
@@ -587,9 +578,9 @@ export default function DonationForm(props: any) {
             <Button
               type="submit"
               className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
-              disabled={getDonationAmount() === 0}
+              disabled={getDonationAmount() === 0 || donationLoading}
             >
-              Donate now
+              {donationLoading ? "Processing..." : "Donate now"}
             </Button>
 
             <p className="text-xs text-gray-500 text-center leading-relaxed">

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Search, Calendar, Heart } from "lucide-react"
+import { Search, Calendar, Heart, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { categoryApi } from "../services/api"
 import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
@@ -212,31 +213,23 @@ export default function PublicCampaignsPage() {
                 {/* Filter By Category */}
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-4">Filter By Category</h3>
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={categoryFilter === "all"}
-                        onChange={() => setCategoryFilter("all")}
-                        className="text-[#37b7ff]"
-                      />
-                      <span className="text-sm">All</span>
-                    </label>
-                    {categories.map((category) => (
-                      <label key={category.id} className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="category"
-                          checked={categoryFilter === category.id}
-                          onChange={() => setCategoryFilter(category.id)}
-                          className="text-[#37b7ff]"
-                        />
-                        <span className="text-sm">{category.name}</span>
-                      </label>
-                    ))}
-                  </div>
-          </div>
+                  <Select
+                    value={categoryFilter === "all" ? "all" : categoryFilter.toString()}
+                    onValueChange={(value) => setCategoryFilter(value === "all" ? "all" : parseInt(value))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {/* Filter by Name */}
                 <div>

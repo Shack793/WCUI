@@ -69,6 +69,8 @@ export default function CampaignDetailsPage() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   // Add state for image error
   const [imgError, setImgError] = useState(false);
+  // Add state for description expansion
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   // Add new state for recent donations and stats
   const [recentStats, setRecentStats] = useState<{
     totalRaised: string;
@@ -170,6 +172,26 @@ export default function CampaignDetailsPage() {
     // Mock donation count based on current amount
     const amount = Number.parseFloat(campaign?.current_amount || "0")
     return Math.floor(amount / 100) // Rough estimate
+  }
+
+  const truncateDescription = (text: string, wordLimit: number = 100) => {
+    const words = text.split(' ');
+    if (words.length <= wordLimit) {
+      return text;
+    }
+    return words.slice(0, wordLimit).join(' ') + '...';
+  }
+
+  const getDisplayDescription = () => {
+    if (!campaign?.description) return '';
+    return isDescriptionExpanded 
+      ? campaign.description 
+      : truncateDescription(campaign.description, 100);
+  }
+
+  const shouldShowViewMore = () => {
+    if (!campaign?.description) return false;
+    return campaign.description.split(' ').length > 100;
   }
 
   const getCurrentUrl = () => {
@@ -352,7 +374,18 @@ export default function CampaignDetailsPage() {
 
               {/* Campaign Description */}
               <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{campaign.description}</p>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {getDisplayDescription()}
+                </p>
+                {shouldShowViewMore() && (
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-[#37b7ff] hover:text-[#2a9ae6] font-medium mt-2"
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  >
+                    {isDescriptionExpanded ? 'View less' : 'View more'}
+                  </Button>
+                )}
               </div>
 
               {/* Reaction Emojis */}

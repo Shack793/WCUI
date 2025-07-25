@@ -98,7 +98,7 @@ const Navbar: React.FC = () => {
           </div>
           
           {/* Right Side Items */}
-          <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center">
               
             </div>
@@ -106,23 +106,23 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-4">
               {/* 
               <Link 
-                to="/dashboard" 
-                className="text-sm text-gray-700 hover:text-primary-500 flex items-center"
+              to="/dashboard" 
+              className="text-sm text-gray-700 hover:text-primary-500 flex items-center"
               >
-                <User size={16} className="mr-1" />
-                Dashboard
+              <User size={16} className="mr-1" />
+              Dashboard
               </Link>
               */}
-          
+            
               
               <Link 
-                to="/login" 
-                className="btn btn-primary text-sm"
+              to="/login" 
+              className="btn btn-primary text-sm hover:bg-gray-800 hover:border-gray-800"
               >
-                START A CAMPAIGN
+              START A CAMPAIGN
               </Link>
             </div>
-          </div>
+            </div>
           
           {/* Mobile menu button */}
           <div className="md:hidden">

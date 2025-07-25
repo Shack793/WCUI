@@ -61,7 +61,7 @@ const AboutSection: React.FC = () => {
             
             <Link 
               to="/public-campaigns" 
-              className="btn btn-primary inline-block w-full sm:w-auto text-center px-6 py-3 text-sm sm:text-base"
+              className="btn btn-primary inline-block w-full sm:w-auto text-center px-6 py-3 text-sm sm:text-base hover:bg-primary-700 transition-colors duration-300"
             >
               EXPLORE CAMPAIGNS
             </Link>
