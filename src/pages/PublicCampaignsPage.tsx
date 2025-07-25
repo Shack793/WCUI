@@ -308,9 +308,6 @@ export default function PublicCampaignsPage() {
                           alt={campaign.title}
                           className="w-full h-56 object-cover"
                         />
-                        <div className="absolute top-4 left-4 bg-primary-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                          {campaign.status}
-                        </div>
                         {campaign.is_boosted && (
                           <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-lg">
                             <span className="mr-1">⭐</span>
@@ -320,9 +317,6 @@ export default function PublicCampaignsPage() {
                       </div>
                       <div className="p-8">
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-sm text-gray-500">
-                            {new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}
-                          </span>
                           <span className="text-sm font-medium">Category: {campaign.category?.name || ''}</span>
                         </div>
                         <h3 className="text-xl font-bold mb-4 line-clamp-2 group-hover:text-primary-500 transition-colors">
