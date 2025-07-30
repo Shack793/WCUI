@@ -64,6 +64,7 @@ export default function DonationForm(props: any) {
     network: '',
     narration: '',
   });
+  const [nameEnquiryLoading, setNameEnquiryLoading] = useState(false);
 
   const { toast } = useToast();
 
@@ -98,6 +99,44 @@ export default function DonationForm(props: any) {
   const formatCurrency = (amount: number): string => {
     return `₵${amount.toFixed(2)}`
   }
+
+  // Name enquiry function
+  const performNameEnquiry = async (msisdn: string, network: string) => {
+    if (!msisdn || !network) return;
+    
+    setNameEnquiryLoading(true);
+    try {
+      console.log('Performing name enquiry with payload:', { msisdn, network });
+      const response = await fetch('http://127.0.0.1:8000/api/v1/wallet/name-enquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          msisdn: msisdn,
+          network: network
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Name enquiry response:', data);
+
+      if (response.ok && data.success && data.data?.name) {
+        // Populate the customer name field
+        setMomoFields(prev => ({
+          ...prev,
+          customer: data.data.name
+        }));
+        console.log('Name enquiry successful, populated name:', data.data.name);
+      } else {
+        console.error('Name enquiry failed or no name returned:', data);
+      }
+    } catch (error) {
+      console.error('Name enquiry error:', error);
+    } finally {
+      setNameEnquiryLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,26 +314,36 @@ export default function DonationForm(props: any) {
     }
   }, [error, campaign]);
 
-  // Network auto-detection for MoMo
+  // Network auto-detection for MoMo and name enquiry
   useEffect(() => {
     const msisdn = momoFields.msisdn || "";
+    let detectedNetwork = "";
+    
     if (
       msisdn.startsWith("024") || msisdn.startsWith("025") || msisdn.startsWith("053") || msisdn.startsWith("054") || msisdn.startsWith("055") || msisdn.startsWith("059") ||
       msisdn.startsWith("+23324") || msisdn.startsWith("+23325") || msisdn.startsWith("+23353") || msisdn.startsWith("+23354") || msisdn.startsWith("+23355") || msisdn.startsWith("+23359")
     ) {
-      setMomoFields((prev) => ({ ...prev, network: "MTN" }));
+      detectedNetwork = "MTN";
     } else if (
       msisdn.startsWith("020") || msisdn.startsWith("050") ||
       msisdn.startsWith("+23320") || msisdn.startsWith("+23350")
     ) {
-      setMomoFields((prev) => ({ ...prev, network: "VODAFONE" }));
+      detectedNetwork = "VODAFONE";
     } else if (
       msisdn.startsWith("027") || msisdn.startsWith("057") || msisdn.startsWith("026") ||
       msisdn.startsWith("+23327") || msisdn.startsWith("+23357") || msisdn.startsWith("+23326")
     ) {
-      setMomoFields((prev) => ({ ...prev, network: "AIRTELTIGO" }));
-    } else {
-      setMomoFields((prev) => ({ ...prev, network: "" }));
+      detectedNetwork = "AIRTELTIGO";
+    }
+
+    // Update network field
+    setMomoFields((prev) => ({ ...prev, network: detectedNetwork }));
+
+    // Trigger name enquiry when number reaches 10 digits and network is detected
+    const cleanNumber = msisdn.replace(/\+233/, '0'); // Convert +233 format to 0 format
+    if (cleanNumber.length === 10 && detectedNetwork) {
+      console.log('Number reached 10 digits, triggering name enquiry...');
+      performNameEnquiry(cleanNumber, detectedNetwork);
     }
   }, [momoFields.msisdn]);
 
@@ -475,23 +524,28 @@ export default function DonationForm(props: any) {
             {paymentMethod === 'momo' && (
               <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
                 <div>
-                  <Label htmlFor="customer" className="block mb-1 font-medium">Full Name</Label>
-                  <Input
-                    id="customer"
-                    name="customer"
-                    value={momoFields.customer}
-                    onChange={e => setMomoFields(f => ({ ...f, customer: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="msisdn" className="block mb-1 font-medium">Phone</Label>
+                  <Label htmlFor="msisdn" className="block mb-1 font-medium">Phone Number</Label>
                   <Input
                     id="msisdn"
                     name="msisdn"
                     value={momoFields.msisdn}
                     onChange={e => setMomoFields(f => ({ ...f, msisdn: e.target.value }))}
+                    placeholder="e.g. 0244123456"
                     required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customer" className="block mb-1 font-medium">
+                    Full Name {nameEnquiryLoading && <span className="text-blue-500">(Loading...)</span>}
+                  </Label>
+                  <Input
+                    id="customer"
+                    name="customer"
+                    value={momoFields.customer}
+                    onChange={e => setMomoFields(f => ({ ...f, customer: e.target.value }))}
+                    placeholder="Full name will be auto-filled"
+                    required
+                    disabled={nameEnquiryLoading}
                   />
                 </div>
                 <div>

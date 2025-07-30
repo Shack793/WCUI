@@ -121,12 +121,12 @@ const TrendingCampaigns: React.FC = () => {
                   )}
                 </div>
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    {/* <span className="text-sm text-gray-500">
+                  {/* <div className="flex items-center justify-between mb-4">
+                    { <span className="text-sm text-gray-500">
                       {new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}
-                    </span> */}
+                    </span> }
                     <span className="text-sm font-medium">Contributions: {campaign.contributions_count}</span>
-                  </div>
+                  </div> */}
                   <h3 className="text-xl font-bold mb-4 line-clamp-2 group-hover:text-primary-500 transition-colors">
                     {campaign.title}
                   </h3>
