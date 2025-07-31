@@ -112,7 +112,7 @@ export default function CampaignDetailsPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${slug}`);
+        const response = await fetch(`https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/${slug}`);
         if (!response.ok) throw new Error('Failed to fetch campaign');
         const data = await response.json();
         setCampaign(data); // API returns the campaign object directly
@@ -126,7 +126,7 @@ export default function CampaignDetailsPage() {
 
     const fetchRecentDonations = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${slug}/donations/recent`);
+        const res = await fetch(`https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/${slug}/donations/recent`);
         if (!res.ok) throw new Error('Failed to fetch recent donations');
         const stats = await res.json();
         setRecentStats(stats);
@@ -239,7 +239,7 @@ export default function CampaignDetailsPage() {
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=200&width=400";
     if (url.startsWith("http")) return url;
-    return `http://127.0.0.1:8000${url}`;
+    return `https://crowdfundingapi.wgtesthub.com${url}`;
   };
 
   // Add a toast for download success (optional, simple alert for now)

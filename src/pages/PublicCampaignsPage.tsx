@@ -62,7 +62,7 @@ export default function PublicCampaignsPage() {
       setError(null)
       try {
         // Updated endpoint to use public campaigns
-        const response = await fetch("http://127.0.0.1:8000/api/v1/campaigns/public")
+        const response = await fetch("https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/public")
         const data = await response.json()
         const campaignsData = Array.isArray(data) ? data : data.data || []
 
@@ -157,7 +157,7 @@ export default function PublicCampaignsPage() {
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=200&width=400"
     if (url.startsWith("http")) return url
-    return `http://127.0.0.1:8000${url}`
+    return `https://crowdfundingapi.wgtesthub.com${url}`
   }
 
   return (

@@ -107,7 +107,7 @@ export default function DonationForm(props: any) {
     setNameEnquiryLoading(true);
     try {
       console.log('Performing name enquiry with payload:', { msisdn, network });
-      const response = await fetch('http://127.0.0.1:8000/api/v1/wallet/name-enquiry', {
+      const response = await fetch('https://crowdfundingapi.wgtesthub.com/api/v1/wallet/name-enquiry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +239,7 @@ export default function DonationForm(props: any) {
       if (!isSpecificMoMoFailure && (shouldAttemptGuestDonation || transactionId) && campaign?.slug) {
         try {
           console.log('Attempting guest donation...');
-          const guestDonationRes = await fetch(`http://127.0.0.1:8000/api/v1/campaigns/${campaign.slug}/donate/guest`, {
+          const guestDonationRes = await fetch(`https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/${campaign.slug}/donate/guest`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -293,7 +293,7 @@ export default function DonationForm(props: any) {
     if (!slug) return;
     setLoading(true);
     setError(null);
-    fetch('http://127.0.0.1:8000/api/v1/campaigns/public')
+    fetch('https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/public')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch campaign');
         return res.json();
@@ -350,7 +350,7 @@ export default function DonationForm(props: any) {
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=80&width=80";
     if (url.startsWith("http")) return url;
-    return `http://127.0.0.1:8000${url}`;
+    return `https://crowdfundingapi.wgtesthub.com${url}`;
   };
 
   // Modified payment method selection to allow deselect

@@ -61,7 +61,7 @@ export default function PublicCampaignsPage() {
       setError(null)
       try {
         // Updated endpoint to use public campaigns
-        const response = await fetch("http://127.0.0.1:8000/api/v1/campaigns/public")
+        const response = await fetch("https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/public")
         const data = await response.json()
         const campaignsData = Array.isArray(data) ? data : data.data || []
 

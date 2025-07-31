@@ -83,7 +83,7 @@ export default function AllCampaignsPage() {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-        const res = await axios.get('http://127.0.0.1:8000/api/v1/campaigns/all', {
+        const res = await axios.get('https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/all', {
           headers
         });
         setCampaigns(res.data || []);
