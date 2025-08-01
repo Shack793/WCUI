@@ -115,12 +115,14 @@ const Navbar: React.FC = () => {
               */}
             
               
-              <Link 
-              to="/login" 
-              className="btn btn-primary text-sm hover:bg-gray-800 hover:border-gray-800"
+              <a 
+                href="https://wgfund.wgtesthub.com" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary text-sm hover:bg-gray-800 hover:border-gray-800"
               >
-              START A CAMPAIGN
-              </Link>
+                START A CAMPAIGN
+              </a>
             </div>
             </div>
           
@@ -140,43 +142,45 @@ const Navbar: React.FC = () => {
           <div className="md:hidden mt-4 pb-4">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className={`text-sm font-medium transition-colors hover:text-primary-500 ${
-                    location.pathname === item.path ? 'text-primary-500' : 'text-gray-700'
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.name}
-                </Link>
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`text-sm font-medium transition-colors hover:text-primary-500 ${
+              location.pathname === item.path ? 'text-primary-500' : 'text-gray-700'
+            }`}
+            onClick={() => setIsOpen(false)}
+          >
+            {item.name}
+          </Link>
               ))}
               
               <div className="pt-2 border-t border-gray-200">
-                <Link 
-                  to="/start-campaign" 
-                  className="btn btn-primary text-sm w-full block text-center"
-                  onClick={() => setIsOpen(false)}
-                >
-                  START A CAMPAIGN
-                </Link>
+          <a 
+            href="https://wgfund.wgtesthub.com/login" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-primary text-sm w-full block text-center"
+            onClick={() => setIsOpen(false)}
+          >
+            START A CAMPAIGN
+          </a>
               </div>
               
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                <button className="flex items-center text-sm text-gray-700 hover:text-primary-500">
-                  <Globe size={16} className="mr-1" />
-                  <span>English</span>
-                  <ChevronDown size={16} />
-                </button>
-                
-                <Link 
-                  to="/dashboard" 
-                  className="text-sm text-gray-700 hover:text-primary-500 flex items-center"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <User size={16} className="mr-1" />
-                  Dashboard
-                </Link>
+          <button className="flex items-center text-sm text-gray-700 hover:text-primary-500">
+            <Globe size={16} className="mr-1" />
+            <span>English</span>
+            <ChevronDown size={16} />
+          </button>
+          
+          <Link 
+            to="/dashboard" 
+            className="text-sm text-gray-700 hover:text-primary-500 flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <User size={16} className="mr-1" />
+            Dashboard
+          </Link>
               </div>
             </div>
           </div>
