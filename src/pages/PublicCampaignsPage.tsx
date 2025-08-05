@@ -77,6 +77,12 @@ export default function PublicCampaignsPage() {
 
         setCampaigns(sortedCampaigns)
         setFilteredCampaigns(sortedCampaigns)
+        
+        // Debug logging
+        console.log('Fetched campaigns:', sortedCampaigns);
+        if (sortedCampaigns.length > 0) {
+          console.log('Sample campaign structure:', sortedCampaigns[0]);
+        }
       } catch (e: any) {
         setError("Failed to fetch campaigns")
         setCampaigns([])
@@ -93,8 +99,11 @@ export default function PublicCampaignsPage() {
     async function fetchCategories() {
       try {
         const res = await categoryApi.getAll()
+        console.log('Categories API response:', res);
+        console.log('Categories data:', res.data);
         setCategories(res.data || [])
       } catch (e) {
+        console.error('Error fetching categories:', e);
         setCategories([])
       }
     }
@@ -104,7 +113,17 @@ export default function PublicCampaignsPage() {
   useEffect(() => {
     const filtered = campaigns.filter((campaign) => {
       const matchesSearch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = categoryFilter === "all" || campaign.category_id === categoryFilter
+      
+      // More robust category matching - handle both string and number comparisons
+      let matchesCategory = false;
+      if (categoryFilter === "all") {
+        matchesCategory = true;
+      } else {
+        // Convert both to numbers for comparison to handle type mismatches
+        const filterAsNumber = typeof categoryFilter === 'string' ? parseInt(categoryFilter) : categoryFilter;
+        const campaignCategoryId = typeof campaign.category_id === 'string' ? parseInt(campaign.category_id) : campaign.category_id;
+        matchesCategory = campaignCategoryId === filterAsNumber;
+      }
 
       let matchesDate = true
       if (dateRange.start && dateRange.end) {
@@ -215,7 +234,12 @@ export default function PublicCampaignsPage() {
                   <h3 className="font-semibold text-gray-800 mb-4">Filter By Category</h3>
                   <Select
                     value={categoryFilter === "all" ? "all" : categoryFilter.toString()}
-                    onValueChange={(value) => setCategoryFilter(value === "all" ? "all" : parseInt(value))}
+                    onValueChange={(value) => {
+                      console.log('Category selection changed:', value);
+                      const newFilter = value === "all" ? "all" : parseInt(value);
+                      console.log('Setting category filter to:', newFilter);
+                      setCategoryFilter(newFilter);
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a category" />
