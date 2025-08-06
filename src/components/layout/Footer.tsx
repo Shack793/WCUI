@@ -14,13 +14,13 @@ const Footer: React.FC = () => {
             
             {/* Social Media Icons */}
             <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-primary-500 transition-colors">
+              <a href="https://www.facebook.com/waltergatesgh/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-500 transition-colors">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-500 transition-colors">
+              <a href="https://www.linkedin.com/company/waltergates-ghana-limited" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-500 transition-colors">
                 <Linkedin size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-500 transition-colors">
+              <a href="https://www.instagram.com/watergatesghlimited" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-500 transition-colors">
                 <Instagram size={20} />
               </a>
             </div>

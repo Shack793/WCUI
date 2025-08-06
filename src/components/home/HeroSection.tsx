@@ -79,14 +79,14 @@ const HeroSection: React.FC = () => {
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 sm:px-6 md:px-8">
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 max-w-xs sm:max-w-2xl md:max-w-3xl leading-tight">{slide.title}</h1>
               <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-sm sm:max-w-xl md:max-w-2xl leading-relaxed">{slide.description}</p>
-              <div className="flex flex-col w-full max-w-xs sm:max-w-sm sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <Link to="/login" className="btn btn-primary w-full sm:w-auto px-6 py-3 text-sm sm:text-base hover:bg-gray-800 hover:border-gray-800 transition-colors">
+                <div className="flex flex-col w-full max-w-xs sm:max-w-sm sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                <a href="https://wgfund.wgtesthub.com/login" target="_blank" rel="noopener noreferrer" className="btn btn-primary w-full sm:w-auto px-6 py-3 text-sm sm:text-base hover:bg-gray-800 hover:border-gray-800 transition-colors">
                   JOIN US
-                </Link>
-                <Link to="/public-campaigns" className="btn btn-secondary w-full sm:w-auto px-6 py-3 text-sm sm:text-base">
+                </a>
+                <Link to="/public-campaigns" className="btn btn-secondary w-full sm:w-auto px-6 py-3 text-sm sm:text-base border-white">
                   EXPLORE CAMPAIGN
                 </Link>
-              </div>
+                </div>
             </div>
           </div>
         ))}
