@@ -79,34 +79,6 @@ export default function CampaignDetailsPage() {
     recentDonations: any[];
   } | null>(null);
 
-  // Mock recent donations data
-  const mockDonations: Donation[] = [
-    {
-      id: 1,
-      donor_name: "Emily Bodin",
-      amount: "100.00",
-      message: "Recent donation",
-      is_anonymous: false,
-      created_at: "2025-01-24T10:00:00Z",
-    },
-    {
-      id: 2,
-      donor_name: "Anonymous",
-      amount: "1635.00",
-      message: "Top donation",
-      is_anonymous: true,
-      created_at: "2025-01-23T15:30:00Z",
-    },
-    {
-      id: 3,
-      donor_name: "Anonymous",
-      amount: "100.00",
-      message: "First donation",
-      is_anonymous: true,
-      created_at: "2025-01-22T09:15:00Z",
-    },
-  ]
-
   useEffect(() => {
     const fetchCampaign = async () => {
       setLoading(true);
@@ -116,7 +88,7 @@ export default function CampaignDetailsPage() {
         if (!response.ok) throw new Error('Failed to fetch campaign');
         const data = await response.json();
         setCampaign(data); // API returns the campaign object directly
-        setDonations(mockDonations);
+        setDonations([]); // We'll use recentStats for donations now
       } catch (e: any) {
         setError('Failed to fetch campaign details');
       } finally {
@@ -166,12 +138,6 @@ export default function CampaignDetailsPage() {
       return `₵${(num / 1000).toFixed(0)}K`
     }
     return formatCurrency(amount)
-  }
-
-  const getDonationCount = () => {
-    // Mock donation count based on current amount
-    const amount = Number.parseFloat(campaign?.current_amount || "0")
-    return Math.floor(amount / 100) // Rough estimate
   }
 
   const truncateDescription = (text: string, wordLimit: number = 100) => {
@@ -345,7 +311,7 @@ export default function CampaignDetailsPage() {
                   src={getImageUrl(campaign.image_url)}
                   alt={campaign.title}
                   className="w-full h-96 object-cover rounded-lg"
-                  onError={e => {
+                  onError={() => {
                     setImgError(true);
                     console.error('Image failed to load:', getImageUrl(campaign.image_url));
                   }}
@@ -459,19 +425,45 @@ export default function CampaignDetailsPage() {
                     </div>
                     {/* Recent Donations */}
                     <div className="space-y-3">
-                      {(recentStats?.recentDonations || []).slice(0, 5).map((donation, idx) => (
-                        <div key={donation.id || idx} className="flex items-center space-x-3">
-                          <HumanIcon size="sm" isAnonymous={!donation.user_id} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {donation.user_id ? (donation.donor_name || 'Anonymous') : 'Anonymous'} donated {formatCurrency(donation.amount)}
-                              </p>
+                      {(recentStats?.recentDonations || []).slice(0, 5).map((donation, idx) => {
+                        // Determine if donation should be anonymous
+                        // If name is exactly "Anonymous", treat as anonymous
+                        // If user_id is null and name is provided, show the name (they didn't choose to be anonymous)
+                        const isAnonymousDonation = donation.name === 'Anonymous' || donation.name === 'anonymous';
+                        const displayName = isAnonymousDonation ? 'Anonymous' : (donation.name || 'Anonymous');
+                        
+                        // Format the contribution date
+                        const formatDate = (dateString: string) => {
+                          const date = new Date(dateString);
+                          const now = new Date();
+                          const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+                          
+                          if (diffInMinutes < 1) return 'Just now';
+                          if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+                          
+                          const diffInHours = Math.floor(diffInMinutes / 60);
+                          if (diffInHours < 24) return `${diffInHours}h ago`;
+                          
+                          const diffInDays = Math.floor(diffInHours / 24);
+                          if (diffInDays < 7) return `${diffInDays}d ago`;
+                          
+                          return date.toLocaleDateString();
+                        };
+                        
+                        return (
+                          <div key={donation.id || idx} className="flex items-center space-x-3">
+                            <HumanIcon size="sm" isAnonymous={isAnonymousDonation} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {displayName} donated {formatCurrency(donation.amount)}
+                                </p>
+                              </div>
+                              <p className="text-xs text-gray-500">{formatDate(donation.contribution_date)}</p>
                             </div>
-                            <p className="text-xs text-gray-500">{donation.contribution_date}</p>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {(!recentStats?.recentDonations || recentStats.recentDonations.length === 0) && (
                         <div className="text-gray-400 text-sm">No recent contributions found.</div>
                       )}

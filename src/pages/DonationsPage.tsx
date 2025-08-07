@@ -122,10 +122,11 @@ export default function DonationForm(props: any) {
       console.log('Name enquiry response:', data);
 
       if (response.ok && data.success && data.data?.name) {
-        // Populate the customer name field
+        // Populate the customer name field and set narration to the customer's name
         setMomoFields(prev => ({
           ...prev,
-          customer: data.data.name
+          customer: data.data.name,
+          narration: data.data.name
         }));
         console.log('Name enquiry successful, populated name:', data.data.name);
       } else {
@@ -245,8 +246,9 @@ export default function DonationForm(props: any) {
             body: JSON.stringify({
               payment_method_id: 1,
               amount: getDonationAmount(),
-              name: momoFields.customer || 'John Doe',
+              name: isAnonymous ? 'Anonymous' : (momoFields.customer || 'John Doe'),
               email: 'john@example.com',
+              is_anonymous: isAnonymous,
             }),
           });
           const guestDonationData = await guestDonationRes.json();
@@ -333,7 +335,7 @@ export default function DonationForm(props: any) {
       msisdn.startsWith("027") || msisdn.startsWith("057") || msisdn.startsWith("026") ||
       msisdn.startsWith("+23327") || msisdn.startsWith("+23357") || msisdn.startsWith("+23326")
     ) {
-      detectedNetwork = "AIRTELTIGO";
+      detectedNetwork = "ARTLTIGO";
     }
 
     // Update network field
@@ -346,6 +348,16 @@ export default function DonationForm(props: any) {
       performNameEnquiry(cleanNumber, detectedNetwork);
     }
   }, [momoFields.msisdn]);
+
+  // Auto-update narration when customer name changes
+  useEffect(() => {
+    if (momoFields.customer) {
+      setMomoFields(prev => ({
+        ...prev,
+        narration: prev.customer
+      }));
+    }
+  }, [momoFields.customer]);
 
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=80&width=80";
@@ -559,17 +571,6 @@ export default function DonationForm(props: any) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="narration" className="block mb-1 font-medium">Comment</Label>
-                  <Input
-                    id="narration"
-                    name="narration"
-                    value={momoFields.narration}
-                    onChange={e => setMomoFields(f => ({ ...f, narration: e.target.value }))}
-                    placeholder="e.g. Debit MTN Customer"
-                    required
-                  />
-                </div>
-                <div>
                   <Label htmlFor="momo-amount" className="block mb-1 font-medium">Amount</Label>
                   <Input
                     id="momo-amount"
@@ -593,17 +594,7 @@ export default function DonationForm(props: any) {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="marketing"
-                  checked={marketingUpdates}
-                  onChange={e => setMarketingUpdates(e.target.checked)}
-                  className="mt-0.5"
-                />
-                <Label htmlFor="marketing" className="text-sm text-gray-700 cursor-pointer">
-                  Get occasional marketing updates from WGCrowdfunding. You may unsubscribe at any time.
-                </Label>
-              </div>
+           
             </div>
 
             {/* Donation Summary */}
