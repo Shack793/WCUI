@@ -19,13 +19,13 @@ const AboutSection: React.FC = () => {
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 leading-tight">Turning Hope into Action – One Cedi at a Time</h2>
             <div className="text-gray-600 space-y-3 sm:space-y-4 mb-4 sm:mb-6">
               <p className="font-medium text-base sm:text-lg">
-                Welcome to WG Crowdfunding – Ghana's Most Trusted Donation Platform.
+                Welcome to MyEasyDonate – Ghana's Most Trusted Donation Platform.
               </p>
               
               <p className="leading-relaxed text-sm sm:text-base">
                 Whether you're raising funds for a loved one's funeral, a Church building project, 
                 your Alma mater's anniversary, a life-saving surgery, or a small business dream,
-                WG Crowdfunding is here to help you make it happen — securely, locally, and globally.
+                MyEasyDonate is here to help you make it happen — securely, locally, and globally.
                 With just a few taps, you can create your personalized donation campaign and receive 
                 contributions from anywhere in the world. From Mobile Money and USSD short codes to 
                 card payments and direct bank transfers, we've built a powerful fundraising system 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Globe, User } from 'lucide-react';
-import RiseLabLogo from '../common/RiseLabLogo';
+import MyEasyDonateLogo from '../common/MyEasyDonateLogo';
 import { useAuth } from '@/lib/AuthContext';
 
 const Navbar: React.FC = () => {
@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
         <div className="container-custom py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <RiseLabLogo className="h-10 w-auto" />
+            <MyEasyDonateLogo className="h-10 w-auto" />
           </Link>
           <div className="flex items-center space-x-4">
             <Link 
@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <RiseLabLogo className="h-10 w-auto" />
+            <MyEasyDonateLogo className="h-10 w-auto" />
           </Link>
           
           {/* Desktop Navigation */}

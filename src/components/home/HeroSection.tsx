@@ -13,7 +13,7 @@ const heroSlides: HeroSlide[] = [
   {
     id: 1,
     image: 'https://images.pexels.com/photos/6347738/pexels-photo-6347738.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    title: 'Welcome to WaltergateFund',
+    title: 'Welcome to MyEasyDonate',
     description: 'You will make a difference here. Make the world better, bolder, brighter. Every donation you give will bring a real change and a new era.',
   },
   {

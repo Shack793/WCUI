@@ -35,7 +35,7 @@ const TrendingCampaigns: React.FC = () => {
   useEffect(() => {
     const fetchTrendingCampaigns = async () => {
       try {
-        const response = await fetch('https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/trending');
+        const response = await fetch('https://admin.myeasydonate.com/api/v1/campaigns/trending');
         const data = await response.json();
         const campaignsData = Array.isArray(data) ? data : data.data || [];
 
@@ -61,7 +61,7 @@ const TrendingCampaigns: React.FC = () => {
   const getImageUrl = (url: string | null) => {
     if (!url) return '/placeholder.svg?height=200&width=400';
     if (url.startsWith('http')) return url;
-    return `https://crowdfundingapi.wgtesthub.com${url}`;
+    return `https://admin.myeasydonate.com${url}`;
   };
 
   const formatCurrency = (amount: string) => {

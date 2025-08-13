@@ -107,7 +107,7 @@ export default function DonationForm(props: any) {
     setNameEnquiryLoading(true);
     try {
       console.log('Performing name enquiry with payload:', { msisdn, network });
-      const response = await fetch('https://crowdfundingapi.wgtesthub.com/api/v1/wallet/name-enquiry', {
+      const response = await fetch('https://admin.myeasydonate.com/api/v1/wallet/name-enquiry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -240,7 +240,7 @@ export default function DonationForm(props: any) {
       if (!isSpecificMoMoFailure && (shouldAttemptGuestDonation || transactionId) && campaign?.slug) {
         try {
           console.log('Attempting guest donation...');
-          const guestDonationRes = await fetch(`https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/${campaign.slug}/donate/guest`, {
+          const guestDonationRes = await fetch(`https://admin.myeasydonate.com/api/v1/campaigns/${campaign.slug}/donate/guest`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -295,7 +295,7 @@ export default function DonationForm(props: any) {
     if (!slug) return;
     setLoading(true);
     setError(null);
-    fetch('https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/public')
+    fetch('https://admin.myeasydonate.com/api/v1/campaigns/public')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch campaign');
         return res.json();
@@ -362,7 +362,7 @@ export default function DonationForm(props: any) {
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=80&width=80";
     if (url.startsWith("http")) return url;
-    return `https://crowdfundingapi.wgtesthub.com${url}`;
+    return `https://admin.myeasydonate.com${url}`;
   };
 
   // Modified payment method selection to allow deselect
@@ -475,7 +475,7 @@ export default function DonationForm(props: any) {
               </div>
 
               <p className="text-sm text-gray-600 leading-relaxed">
-                WGCrowdfunding has a 0% platform fee for organizers. WGCrowdfunding will continue offering its services thanks to
+                MyEasyDonate has a 0% platform fee for organizers. MyEasyDonate will continue offering its services thanks to
                 donors who will leave an optional amount here:
               </p>
 
@@ -607,7 +607,7 @@ export default function DonationForm(props: any) {
               </div>
 
             {/*  <div className="flex justify-between text-sm">
-                <span className="text-gray-600">WaltergateFund tip</span>
+                <span className="text-gray-600">MyEasyDonate tip</span>
                 <span className="font-medium">{formatCurrency(getTipAmount())}</span>
               </div>*/}
 
@@ -629,7 +629,7 @@ export default function DonationForm(props: any) {
             </Button>
 
             <p className="text-xs text-gray-500 text-center leading-relaxed">
-              By continuing, you agree with WGCrowdfunding's Terms and Privacy Policy, .
+              By continuing, you agree with MyEasyDonate's Terms and Privacy Policy, .
             </p>
           </div>
         </form>

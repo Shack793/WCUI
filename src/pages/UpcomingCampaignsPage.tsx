@@ -61,7 +61,7 @@ export default function PublicCampaignsPage() {
       setError(null)
       try {
         // Updated endpoint to use public campaigns
-        const response = await fetch("https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/public")
+        const response = await fetch("https://admin.myeasydonate.com/api/v1/campaigns/public")
         const data = await response.json()
         const campaignsData = Array.isArray(data) ? data : data.data || []
 
@@ -151,6 +151,20 @@ export default function PublicCampaignsPage() {
       default:
         return "bg-gray-500"
     }
+  }
+
+  const getImageUrl = (url: string | null) => {
+    if (!url) {
+      console.log('No image URL provided, using placeholder');
+      return "/placeholder.svg?height=200&width=400";
+    }
+    if (url.startsWith("http")) {
+      console.log('Using full URL:', url);
+      return url;
+    }
+    const fullUrl = `https://admin.myeasydonate.com${url}`;
+    console.log('Constructed image URL:', fullUrl);
+    return fullUrl;
   }
 
   return (
@@ -298,9 +312,14 @@ export default function PublicCampaignsPage() {
                     >
                       <div className="relative">
                         <img
-                          src={campaign.image_url || "/placeholder.svg?height=200&width=400"}
+                          src={getImageUrl(campaign.image_url)}
                           alt={campaign.title}
                           className="w-full h-48 object-cover"
+                          onError={(e) => {
+                            console.error('Image failed to load:', getImageUrl(campaign.image_url));
+                            console.error('Campaign:', campaign.title);
+                            e.currentTarget.src = "/placeholder.svg?height=200&width=400";
+                          }}
                         />
                         <div className="absolute top-4 left-4">
                           <Badge className={`${getStatusColor(campaign.status)} text-white`}>

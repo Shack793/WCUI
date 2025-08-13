@@ -51,7 +51,7 @@ export default function LoginPage() {
           {/* Login Form Section */}
           <div className="md:w-1/2 p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to WaltergateFund</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to MyEasyDonate</h1>
               <p className="text-gray-600">Please sign in to your account</p>
             </div>
 

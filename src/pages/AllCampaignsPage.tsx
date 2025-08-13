@@ -83,7 +83,7 @@ export default function AllCampaignsPage() {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-        const res = await axios.get('https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/all', {
+        const res = await axios.get('https://admin.myeasydonate.com/api/v1/campaigns/all', {
           headers
         });
         setCampaigns(res.data || []);

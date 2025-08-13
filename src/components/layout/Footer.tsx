@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
         <div className="container-custom">
           <div className="flex flex-col lg:flex-row justify-between items-center space-y-6 lg:space-y-0">
             <p className="text-gray-400 text-xs sm:text-sm text-center lg:text-left">
-              &copy; {new Date().getFullYear()} WGCrowdfunding. All rights reserved.
+              &copy; {new Date().getFullYear()} MyEasyDonate. All rights reserved.
             </p>
             
             {/* Social Media Icons */}

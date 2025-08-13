@@ -28,7 +28,7 @@ const AllCampaignPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.get('https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/all');
+        const res = await axios.get('https://admin.myeasydonate.com/api/v1/campaigns/all');
         setCampaigns(res.data || []);
       } catch (e: any) {
         console.error(e);

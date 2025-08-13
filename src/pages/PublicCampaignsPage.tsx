@@ -62,7 +62,7 @@ export default function PublicCampaignsPage() {
       setError(null)
       try {
         // Updated endpoint to use public campaigns
-        const response = await fetch("https://crowdfundingapi.wgtesthub.com/api/v1/campaigns/public")
+        const response = await fetch("https://admin.myeasydonate.com/api/v1/campaigns/public")
         const data = await response.json()
         const campaignsData = Array.isArray(data) ? data : data.data || []
 
@@ -82,6 +82,8 @@ export default function PublicCampaignsPage() {
         console.log('Fetched campaigns:', sortedCampaigns);
         if (sortedCampaigns.length > 0) {
           console.log('Sample campaign structure:', sortedCampaigns[0]);
+          console.log('Sample image URL:', sortedCampaigns[0].image_url);
+          console.log('Sample image_url type:', typeof sortedCampaigns[0].image_url);
         }
       } catch (e: any) {
         setError("Failed to fetch campaigns")
@@ -174,9 +176,17 @@ export default function PublicCampaignsPage() {
   }
 
   const getImageUrl = (url: string | null) => {
-    if (!url) return "/placeholder.svg?height=200&width=400"
-    if (url.startsWith("http")) return url
-    return `https://crowdfundingapi.wgtesthub.com${url}`
+    if (!url) {
+      console.log('No image URL provided, using placeholder');
+      return "/placeholder.svg?height=200&width=400";
+    }
+    if (url.startsWith("http")) {
+      console.log('Using full URL:', url);
+      return url;
+    }
+    const fullUrl = `https://admin.myeasydonate.com${url}`;
+    console.log('Constructed image URL:', fullUrl);
+    return fullUrl;
   }
 
   return (
@@ -331,6 +341,11 @@ export default function PublicCampaignsPage() {
                           src={getImageUrl(campaign.image_url)}
                           alt={campaign.title}
                           className="w-full h-56 object-cover"
+                          onError={(e) => {
+                            console.error('Image failed to load:', getImageUrl(campaign.image_url));
+                            console.error('Campaign:', campaign.title);
+                            e.currentTarget.src = "/placeholder.svg?height=200&width=400";
+                          }}
                         />
                         {campaign.is_boosted && (
                           <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-lg">

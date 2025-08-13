@@ -88,7 +88,7 @@ export default function RegisterPage() {
           <div className="md:w-1/2 p-8">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Create an Account</h1>
-              <p className="text-gray-600">Join WaltergateFund today</p>
+              <p className="text-gray-600">Join MyEasyDonate today</p>
             </div>
 
             {/* Social login buttons */}

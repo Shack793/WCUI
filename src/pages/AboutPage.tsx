@@ -66,7 +66,7 @@ const AboutPage: React.FC = () => {
                  Shared Boldly
               </h2>
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
-                At WG Crowdfunding, we don’t just process donations. We empower change-makers. We tell stories. We rally communities. We give dreams a fighting chance.
+                At MyEasyDonate, we don’t just process donations. We empower change-makers. We tell stories. We rally communities. We give dreams a fighting chance.
                 Start your campaign today. Your supporters are waiting.
 
               </p>
@@ -75,7 +75,7 @@ const AboutPage: React.FC = () => {
             {/* Statistics */}
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div className="bg-[#37b7ff] bg-opacity-10 p-6 rounded-lg text-center">
-                <h3 className="text-3xl font-bold text-[#37b7ff] mb-2">GHS 12,100</h3>
+                <h3 className="text-3xl font-bold text-[#37b7ff] mb-2">GHS 10,000+</h3>
                 <p className="text-gray-700 font-medium">Total Fund Raised</p>
               </div>
               <div className="bg-[#37b7ff] bg-opacity-10 p-6 rounded-lg text-center">

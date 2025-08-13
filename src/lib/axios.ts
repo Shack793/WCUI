@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://crowdfundingapi.wgtesthub.com/api/v1',
+  baseURL: 'https://admin.myeasydonate.com/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
