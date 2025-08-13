@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
             
               
               <a 
-                href="https://wgfund.wgtesthub.com" 
+                href="http://dashboard.myeasydonate.com/login"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary text-sm hover:bg-gray-800 hover:border-gray-800"
@@ -156,7 +156,7 @@ const Navbar: React.FC = () => {
               
               <div className="pt-2 border-t border-gray-200">
           <a 
-            href="https://wgfund.wgtesthub.com/login" 
+            href="http://dashboard.myeasydonate.com/login" 
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary text-sm w-full block text-center"

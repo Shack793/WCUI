@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
@@ -84,13 +83,17 @@ const AboutPage: React.FC = () => {
               </div>
             </div>
 
-            <Link to="/public-campaigns">
+            <a 
+              href="http://dashboard.myeasydonate.com/login"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <div className="mt-8">
                 <button className="bg-[#37b7ff] hover:bg-[#2a8fc7] text-white px-8 py-3 rounded-lg font-medium transition-colors duration-300">
                   Start a Campaign
                 </button>
               </div>
-            </Link>
+            </a>
           </div>
         </div>
       </div>

@@ -201,6 +201,26 @@ export default function CampaignDetailsPage() {
     }
   }
 
+  // Add a function to format donor names
+  const formatDonorName = (name: string) => {
+    if (!name || name === 'Anonymous' || name === 'anonymous') {
+      return 'Anonymous';
+    }
+    
+    // Split the name into parts
+    const nameParts = name.trim().split(' ');
+    
+    if (nameParts.length === 1) {
+      // Single name - add Mr prefix and limit to 8 characters
+      const firstName = nameParts[0];
+      return firstName.length > 8 ? firstName.substring(0, 8) + '...' : firstName;
+    } else {
+      // Multiple names - use Mr + first name only, limit to 8 characters
+      const firstName = nameParts[0];
+      return `${firstName.length > 8 ? firstName.substring(0, 8) + '...' : firstName}`;
+    }
+  };
+
   // Replace the getImageUrl function with the one from PublicCampaignsPage.tsx
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=200&width=400";
@@ -430,7 +450,7 @@ export default function CampaignDetailsPage() {
                         // If name is exactly "Anonymous", treat as anonymous
                         // If user_id is null and name is provided, show the name (they didn't choose to be anonymous)
                         const isAnonymousDonation = donation.name === 'Anonymous' || donation.name === 'anonymous';
-                        const displayName = isAnonymousDonation ? 'Anonymous' : (donation.name || 'Anonymous');
+                        const displayName = isAnonymousDonation ? 'Anonymous' : formatDonorName(donation.name || 'Anonymous');
                         
                         // Format the contribution date
                         const formatDate = (dateString: string) => {
@@ -455,7 +475,7 @@ export default function CampaignDetailsPage() {
                             <HumanIcon size="sm" isAnonymous={isAnonymousDonation} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                                <p className="text-sm font-medium text-gray-900 truncate flex-shrink mr-2">
                                   {displayName} donated {formatCurrency(donation.amount)}
                                 </p>
                               </div>
