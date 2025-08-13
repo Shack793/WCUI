@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
   // Define navigation items
   const navItems = [
     { name: 'HOME', path: '/' },
-    { name: 'ABOUT', path: '/about' },
+   //{ name: 'ABOUT', path: '/about' },
     { name: 'FAQ', path: '/faq' },
     { name: 'CAMPAIGNS', path: '/public-campaigns' },
     //{ name: 'UPCOMING', path: '/upcoming-campaigns' },
