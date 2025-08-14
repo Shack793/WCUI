@@ -414,7 +414,7 @@ export default function DonationForm(props: any) {
                 <div className="ml-4 flex-1 min-w-0">
                   <p className="text-sm text-gray-600 mb-1">You're supporting</p>
                   <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-2">{campaign.title}</h3>
-                  <p className="text-xs text-gray-500">Your donation will benefit {campaign.user?.name || 'the beneficiary'}.</p>
+                 {/* <p className="text-xs text-gray-500">Your donation will benefit {campaign.user?.name || 'the beneficiary'}.</p> */}
                 </div>
               </>
             ) : (

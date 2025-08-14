@@ -30,7 +30,8 @@ const App: React.FC = () => {
   // Add Tawk.to live chat script
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = "https://embed.tawk.to/67b5c7ba9ab76b190dd3f535/1j10qodic";
+    //script.src = "https://embed.tawk.to/67b5c7ba9ab76b190dd3f535/1j10qodic";
+    script.src = "https://embed.tawk.to/689db22b9c377f1928b6849d/1j2jvvuer";
     script.async = true;
     script.charset = "UTF-8";
     script.setAttribute("crossorigin", "*");

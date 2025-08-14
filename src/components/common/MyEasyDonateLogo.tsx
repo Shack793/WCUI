@@ -1,5 +1,5 @@
 import React from 'react';
-import wggLogo from '@/images/logo/wgg.png';
+import myEasyDonateLogo from '@/images/logo/MyEasyDonate 2.png';
 
 interface MyEasyDonateLogo {
   className?: string;
@@ -8,12 +8,13 @@ interface MyEasyDonateLogo {
 const MyEasyDonateLogo: React.FC<MyEasyDonateLogo> = ({ className = '' }) => {
   return (
     <div className={`flex items-center ${className}`}>
-      <img src={wggLogo} alt="MyEasyDonate Logo" className="w-8 h-8 mr-2" />
+      <img src={myEasyDonateLogo} alt="MyEasyDonate Logo" className="h-full w-auto" />
+      {/* Comment 
       <span className="text-xl font-bold flex items-center">
         <span className="text-black dark:text-white">MyEasy</span>
         <span className="mx-1" />
         <span className="text-red-500">Donate</span>
-      </span>
+      </span>*/}
     </div>
   );
 };
