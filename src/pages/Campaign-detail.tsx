@@ -14,6 +14,7 @@ import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
 import QRCodeModal from '@/components/QRCodeModal';
 import { CampaignDetailSkeleton } from '@/components/ui/shimmer';
+import { campaignApi } from '@/services/api';
 
 interface Campaign {
   id: number
@@ -84,9 +85,8 @@ export default function CampaignDetailsPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`https://admin.myeasydonate.com/api/v1/campaigns/${slug}`);
-        if (!response.ok) throw new Error('Failed to fetch campaign');
-        const data = await response.json();
+        const response = await campaignApi.getBySlug(slug!);
+        const data = response.data;
         setCampaign(data); // API returns the campaign object directly
         setDonations([]); // We'll use recentStats for donations now
       } catch (e: any) {
@@ -98,9 +98,8 @@ export default function CampaignDetailsPage() {
 
     const fetchRecentDonations = async () => {
       try {
-        const res = await fetch(`https://admin.myeasydonate.com/api/v1/campaigns/${slug}/donations/recent`);
-        if (!res.ok) throw new Error('Failed to fetch recent donations');
-        const stats = await res.json();
+        const res = await campaignApi.getRecentDonations(slug!);
+        const stats = res.data;
         setRecentStats(stats);
         if (!stats.recentDonations || stats.recentDonations.length === 0) {
           console.warn('No recent donations found for this campaign:', slug);

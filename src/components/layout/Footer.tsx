@@ -42,9 +42,11 @@ const Footer: React.FC = () => {
               {/* Right Side: Navigation Links */}
               <div className="flex-1 lg:flex-none">
                 <div className="flex flex-wrap justify-center lg:justify-end space-x-3 sm:space-x-4 md:space-x-6">
-                  <Link to="/about" className="text-gray-400 hover:text-primary-500 transition-colors text-xs sm:text-sm">
+                 
+                {/*ink to="/about" className="text-gray-400 hover:text-primary-500 transition-colors text-xs sm:text-sm">
                     About Us
-                  </Link>
+                  </Link>*/}
+
                   <Link to="/public-campaigns" className="text-gray-400 hover:text-primary-500 transition-colors text-xs sm:text-sm">
                     Campaigns
                   </Link>

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { categoryApi } from "../services/api"
+import { campaignApi, categoryApi } from "../services/api"
 import Navbar from "@/components/layout/Navbar"
 import Footer from "@/components/layout/Footer"
 import { CampaignCardSkeleton } from '@/components/ui/shimmer'
@@ -62,8 +62,8 @@ export default function PublicCampaignsPage() {
       setError(null)
       try {
         // Updated endpoint to use public campaigns
-        const response = await fetch("https://admin.myeasydonate.com/api/v1/campaigns/public")
-        const data = await response.json()
+        const response = await campaignApi.getPublic()
+        const data = response.data
         const campaignsData = Array.isArray(data) ? data : data.data || []
 
         // Sort campaigns to show boosted ones first

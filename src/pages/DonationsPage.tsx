@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,9 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { CreditCard, Smartphone, Info } from "lucide-react"
-import { paymentsApi } from '@/services/api';
-import { useToast } from '@/components/ui/use-toast';
+import { CreditCard, Smartphone, Info, Gift, Download, Printer } from "lucide-react"
+import { paymentsApi, campaignApi, walletApi } from '@/services/api';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import type { DebitWalletPayload } from '@/lib/types';
 
 interface Campaign {
@@ -43,13 +46,39 @@ interface Campaign {
   }
 }
 
+interface ReceiptData {
+  transactionId: string | undefined
+  campaignTitle: string
+  campaignOwner: string
+  donorName: string
+  amount: number
+  tipAmount: number
+  totalAmount: number
+  paymentMethod: string
+  network?: string
+  date: string
+  receiptNumber: string
+}
+
 export default function DonationForm(props: any) {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(false);
   const [donationLoading, setDonationLoading] = useState(false);
+  const [checkingPaymentStatus, setCheckingPaymentStatus] = useState(false);
+  const [statusCheckCancelled, setStatusCheckCancelled] = useState(false);
+  const statusCheckCancelledRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [campaignNotFound, setCampaignNotFound] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [notification, setNotification] = useState<{show: boolean, title: string, description: string, type: 'success' | 'error' | 'info'}>({
+    show: false,
+    title: '',
+    description: '',
+    type: 'info'
+  });
   const [selectedAmount, setSelectedAmount] = useState<string>("")
   const [customAmount, setCustomAmount] = useState<string>("")
   const [tipPercentage, setTipPercentage] = useState<number[]>([2])
@@ -66,7 +95,15 @@ export default function DonationForm(props: any) {
   });
   const [nameEnquiryLoading, setNameEnquiryLoading] = useState(false);
 
-  const { toast } = useToast();
+  // Custom notification function to replace problematic toast
+  const showNotification = (title: string, description: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setNotification({
+      show: true,
+      title,
+      description,
+      type
+    });
+  };
 
   const predefinedAmounts = ["50", "100", "200", "300", "500", "1000"]
 
@@ -100,6 +137,105 @@ export default function DonationForm(props: any) {
     return `₵${amount.toFixed(2)}`
   }
 
+  // Generate receipt data
+  const generateReceiptData = (transactionId: string | undefined): ReceiptData => {
+    const receiptNumber = `RCPT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    return {
+      transactionId,
+      campaignTitle: campaign?.title || 'Unknown Campaign',
+      campaignOwner: campaign?.user?.name || 'Unknown Owner',
+      donorName: isAnonymous ? 'Anonymous' : (momoFields.customer || 'John Doe'),
+      amount: getDonationAmount(),
+      tipAmount: getTipAmount(),
+      totalAmount: getTotalAmount(),
+      paymentMethod: paymentMethod.toUpperCase(),
+      network: paymentMethod === 'momo' ? momoFields.network : undefined,
+      date: new Date().toLocaleString(),
+      receiptNumber
+    };
+  };
+
+  // Download receipt as PDF
+  const downloadReceiptPDF = async () => {
+    if (!receiptData) return;
+    
+    const receiptElement = document.getElementById('receipt-content');
+    if (!receiptElement) return;
+
+    try {
+      const canvas = await html2canvas(receiptElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF();
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`donation-receipt-${receiptData.receiptNumber}.pdf`);
+      showNotification('Success', 'Receipt downloaded successfully!', 'success');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      showNotification('Error', 'Failed to download receipt. Please try again.', 'error');
+    }
+  };
+
+  // Print receipt
+  const printReceipt = () => {
+    const receiptElement = document.getElementById('receipt-content');
+    if (!receiptElement) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Donation Receipt</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .receipt { max-width: 600px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .logo { font-size: 24px; font-weight: bold; color: #37b7ff; }
+            .receipt-title { font-size: 18px; margin: 10px 0; }
+            .receipt-info { margin: 20px 0; }
+            .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
+            .label { font-weight: bold; }
+            .divider { border-top: 1px solid #ccc; margin: 20px 0; }
+            .total { font-size: 18px; font-weight: bold; }
+            .footer { text-align: center; margin-top: 30px; color: #666; }
+          </style>
+        </head>
+        <body>
+          ${receiptElement.innerHTML}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   // Name enquiry function
   const performNameEnquiry = async (msisdn: string, network: string) => {
     if (!msisdn || !network) return;
@@ -107,21 +243,11 @@ export default function DonationForm(props: any) {
     setNameEnquiryLoading(true);
     try {
       console.log('Performing name enquiry with payload:', { msisdn, network });
-      const response = await fetch('https://admin.myeasydonate.com/api/v1/wallet/name-enquiry', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          msisdn: msisdn,
-          network: network
-        }),
-      });
-
-      const data = await response.json();
+      const response = await walletApi.nameEnquiry({ msisdn, network });
+      const data = response.data;
       console.log('Name enquiry response:', data);
 
-      if (response.ok && data.success && data.data?.name) {
+      if (data.success && data.data?.name) {
         // Populate the customer name field and set narration to the customer's name
         setMomoFields(prev => ({
           ...prev,
@@ -142,6 +268,8 @@ export default function DonationForm(props: any) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setDonationLoading(true);
+    setStatusCheckCancelled(false); // Reset cancel state
+    statusCheckCancelledRef.current = false; // Reset ref state
 
     if (paymentMethod === 'momo') {
       const momoPayload: DebitWalletPayload = {
@@ -168,20 +296,72 @@ export default function DonationForm(props: any) {
           transactionId = data.data?.transactionId;
           if (transactionId) {
             console.log('Payment initiated successfully, checking phone for approval...');
-            // Check status 2 times with the refNo
+            // Continue checking status with the refNo
             const refNo = data.data?.refNo || transactionId;
+            console.log(`Starting continuous status check for refNo: ${refNo}`);
+            console.log(`Status check URL: https://admin.myeasydonate.com/api/v1/payments/check-status/${refNo}`);
+            
+            setCheckingPaymentStatus(true);
+            showNotification(
+              'Checking Payment Status', 
+              'Please wait while we verify your mobile money payment...', 
+              'info'
+            );
+            
             let pollCount = 0;
-            while (pollCount < 2) {
-              await new Promise(r => setTimeout(r, 3000));
+            const maxPolls = 20; // Maximum 20 attempts (60 seconds)
+            
+            while (pollCount < maxPolls && !statusCheckCancelledRef.current) {
+              await new Promise(r => setTimeout(r, 3000)); // Wait 3 seconds
+              
+              // Check if user cancelled the status checking
+              if (statusCheckCancelledRef.current) {
+                console.log('Status checking cancelled by user');
+                break;
+              }
+              
               try {
+                console.log(`Checking status attempt ${pollCount + 1}/${maxPolls} for refNo: ${refNo}`);
                 statusRes = await paymentsApi.checkStatus(refNo);
-                status = statusRes.data.status || statusRes.data.transactionStatus;
+                status = statusRes.data.data?.transactionStatus || statusRes.data.transactionStatus;
                 console.log(`Status check ${pollCount + 1}: ${status}`);
+                console.log('Full status response:', statusRes.data);
+                
+                // If we get a definitive status (SUCCESSFUL or FAILED), break the loop
+                if (status === 'SUCCESSFUL' || status === 'SUCCESS' || status === 'FAILED') {
+                  console.log(`Transaction ${status}, stopping status checks.`);
+                  setCheckingPaymentStatus(false);
+                  break;
+                }
               } catch (statusErr) {
                 console.error('Status check error:', statusErr);
-                console.log('Status check failed, proceeding...');
+                console.log('Status check failed, continuing...');
               }
               pollCount++;
+            }
+            
+            // Handle different exit conditions
+            if (statusCheckCancelledRef.current) {
+              console.log('Status checking was cancelled by user');
+              setCheckingPaymentStatus(false);
+              setStatusCheckCancelled(false);
+              statusCheckCancelledRef.current = false;
+              showNotification(
+                'Transaction Cancelled', 
+                'Status checking was cancelled. Please check your mobile money account manually.',
+                'info'
+              );
+            } else if (pollCount >= maxPolls && (status === 'PENDING' || !status)) {
+              console.log('Status check timeout: Transaction still PENDING after maximum attempts - considering as FAILED');
+              setCheckingPaymentStatus(false);
+              status = 'FAILED'; // Set status to FAILED after timeout
+              showNotification(
+                'Transaction Failed', 
+                'Payment timed out. Please try again with a different payment method.',
+                'error'
+              );
+            } else {
+              setCheckingPaymentStatus(false);
             }
           } else {
             lastToastError = 'No transaction ID received';
@@ -192,7 +372,7 @@ export default function DonationForm(props: any) {
           // Handle error code 100 - Transaction Failed
           lastApiError = data;
           lastToastError = data.error || 'Transaction Failed';
-          toast({ title: 'Payment Error', description: 'Transaction Failed. Please try again or use a different payment method.' });
+          showNotification('Payment Error', 'Transaction Failed. Please try again or use a different payment method.', 'error');
           // Do NOT attempt guest donation for error code 100
           shouldAttemptGuestDonation = false;
         } else {
@@ -211,7 +391,7 @@ export default function DonationForm(props: any) {
           // Check for errorCode 100 Transaction Failed from falcon pay
           if (responseData && responseData.errorCode === '100') {
             isSpecificMoMoFailure = true;
-            toast({ title: 'Payment Error', description: 'Transaction Failed. Please try again or use a different payment method.' });
+            showNotification('Payment Error', 'Transaction Failed. Please try again or use a different payment method.', 'error');
           } else {
             console.error('Payment Error:', errorMsg);
           }
@@ -235,36 +415,81 @@ export default function DonationForm(props: any) {
         }
       }
 
-      // Make guest donation for successful payments or unknown errors (but NOT for error code 100)
+      // Make guest donation only for SUCCESSFUL or FAILED status (not PENDING or other statuses)
       const isSpecificMoMoFailure = lastApiError && lastApiError.errorCode === '100';
-      if (!isSpecificMoMoFailure && (shouldAttemptGuestDonation || transactionId) && campaign?.slug) {
+      const shouldProceedWithGuestDonation = !isSpecificMoMoFailure && !statusCheckCancelled && (
+        status === 'SUCCESSFUL' || 
+        status === 'SUCCESS' || 
+        status === 'FAILED'
+      );
+      
+      if (shouldProceedWithGuestDonation && campaign?.slug) {
         try {
-          console.log('Attempting guest donation...');
-          const guestDonationRes = await fetch(`https://admin.myeasydonate.com/api/v1/campaigns/${campaign.slug}/donate/guest`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              payment_method_id: 1,
-              amount: getDonationAmount(),
-              name: isAnonymous ? 'Anonymous' : (momoFields.customer || 'John Doe'),
-              email: 'john@example.com',
-              is_anonymous: isAnonymous,
-            }),
+          console.log(`Attempting guest donation with transaction status: ${status}...`);
+          const guestDonationRes = await campaignApi.donateGuest(campaign.slug, {
+            payment_method_id: 1,
+            amount: getDonationAmount(),
+            name: isAnonymous ? 'Anonymous' : (momoFields.customer || 'John Doe'),
+            email: 'john@example.com',
+            is_anonymous: isAnonymous,
           });
-          const guestDonationData = await guestDonationRes.json();
-          if (guestDonationRes.ok) {
-            toast({ title: 'Donation Recorded', description: 'Thank you for your donation!' });
-            console.log('Guest donation successful, redirecting to campaign page...');
-            // Redirect to campaign detail page after successful donation
-            setTimeout(() => {
-              navigate(`/campaign/${campaign.slug}`);
-            }, 2000); // 2 second delay to show the success message
+          const guestDonationData = guestDonationRes.data;
+          if (guestDonationRes.status === 200 || guestDonationRes.status === 201) {
+            // Generate receipt data and show receipt modal for successful payments
+            const receipt = generateReceiptData(transactionId);
+            setReceiptData(receipt);
+            setShowReceiptModal(true);
+            console.log('Guest donation successful, showing receipt...');
+            
+            // Show success toast with receipt options
+            if (status === 'SUCCESSFUL' || status === 'SUCCESS') {
+              showNotification(
+                'Payment Successful!', 
+                'Your donation was successful. You can now download or print your receipt.',
+                'success'
+              );
+            }
           } else {
             console.error('Donation Record Error:', guestDonationData.message || 'Failed to record donation.');
+            if (status === 'FAILED') {
+              showNotification(
+                'Payment Failed', 
+                'Your payment was not successful. Please try again with a different payment method.',
+                'error'
+              );
+            }
           }
         } catch (guestErr: any) {
           console.error('Donation Record Error:', guestErr.message || 'Failed to record donation.');
+          if (status === 'FAILED') {
+            showNotification(
+              'Payment Failed', 
+              'Your payment was not successful. Please try again with a different payment method.',
+              'error'
+            );
+          }
         }
+      } else if (status === 'PENDING') {
+        console.log('Payment status is still PENDING, not attempting guest donation yet.');
+        showNotification(
+          'Payment Pending', 
+          'Your payment is being processed. Please check your mobile money account or try again later.',
+          'info'
+        );
+      } else if (status === 'FAILED') {
+        console.log('Payment status is FAILED, showing error message.');
+        showNotification(
+          'Payment Failed', 
+          'Your mobile money payment was declined. Please try again or use a different payment method.',
+          'error'
+        );
+      } else {
+        console.log(`Payment status is ${status || 'unknown'}, not attempting guest donation for non-final status.`);
+        showNotification(
+          'Payment Status Unknown', 
+          'Unable to determine payment status. Please check your mobile money account or try again.',
+          'info'
+        );
       }
 
       // Store campaign ID and clear loading state
@@ -286,8 +511,10 @@ export default function DonationForm(props: any) {
     }
 
     console.log("Donation submitted:", donationData)
-    // Handle form submission here
-    alert(`Thank you for your donation of ${formatCurrency(getTotalAmount())}!`)
+    // Generate receipt data and show receipt modal instead of toast
+    const receipt = generateReceiptData(undefined); // No transaction ID for card payments
+    setReceiptData(receipt);
+    setShowReceiptModal(true);
     setDonationLoading(false);
   }
 
@@ -295,18 +522,24 @@ export default function DonationForm(props: any) {
     if (!slug) return;
     setLoading(true);
     setError(null);
-    fetch('https://admin.myeasydonate.com/api/v1/campaigns/public')
+    setCampaignNotFound(false);
+    campaignApi.getPublic()
       .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch campaign');
-        return res.json();
-      })
-      .then(data => {
+        const data = res.data;
         const campaignsData = Array.isArray(data) ? data : data.data || [];
         const found = campaignsData.find((c: Campaign) => c.slug === slug);
-        if (found) setCampaign(found);
-        else setError('Campaign not found');
+        if (found) {
+          setCampaign(found);
+          setCampaignNotFound(false);
+        } else {
+          setError('Campaign not found');
+          setCampaignNotFound(true);
+        }
       })
-      .catch(() => setError('Failed to fetch campaign details'))
+      .catch(() => {
+        setError('Failed to fetch campaign details');
+        setCampaignNotFound(true);
+      })
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -390,7 +623,39 @@ export default function DonationForm(props: any) {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* Conditional rendering based on campaign state */}
+      {campaignNotFound ? (
+        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-8 text-center">
+            <div className="flex justify-center mb-6">
+              <Gift className="h-16 w-16 text-gray-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Campaign Not Found
+            </h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              We're sorry, but we couldn't find the campaign you're looking for. 
+              It may have been moved, deleted, or the link might be incorrect.
+            </p>
+            <div className="space-y-4">
+              <Button
+                onClick={() => navigate('/public-campaigns')}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Browse All Campaigns
+              </Button>
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                className="w-full"
+              >
+                Go to Homepage
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <form onSubmit={handleSubmit}>
           {/* Campaign Details (inside form, always visible if campaign loaded) */}
           <div className="flex items-center p-4 border-b mb-4 min-h-[80px]">
@@ -620,20 +885,174 @@ export default function DonationForm(props: any) {
             </div>
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
-              disabled={getDonationAmount() === 0 || donationLoading}
-            >
-              {donationLoading ? "Processing..." : "Donate now"}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                type="submit"
+                className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold text-lg"
+                disabled={getDonationAmount() === 0 || donationLoading || checkingPaymentStatus}
+              >
+                {checkingPaymentStatus 
+                  ? "Checking Payment Status..." 
+                  : donationLoading 
+                  ? "Processing..." 
+                  : "Donate now"}
+              </Button>
+              
+              {/* Cancel Button - only show when checking payment status */}
+              {checkingPaymentStatus && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 border-red-300 text-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    setStatusCheckCancelled(true);
+                    statusCheckCancelledRef.current = true; // Set ref to immediately stop the loop
+                    setCheckingPaymentStatus(false);
+                    setDonationLoading(false);
+                    showNotification(
+                      'Transaction Cancelled', 
+                      'Status checking cancelled. You can try again or check your mobile money account.',
+                      'info'
+                    );
+                  }}
+                >
+                  Cancel Status Check
+                </Button>
+              )}
+            </div>
 
             <p className="text-xs text-gray-500 text-center leading-relaxed">
               By continuing, you agree with MyEasyDonate's Terms and Privacy Policy, .
             </p>
           </div>
         </form>
-      </div>
+        </div>
+      )}
+
+      {/* Receipt Modal */}
+      {receiptData && (
+        <Dialog open={showReceiptModal} onOpenChange={setShowReceiptModal}>
+          <DialogContent className="sm:max-w-md max-w-[95vw] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Donation Receipt</DialogTitle>
+            </DialogHeader>
+            
+            <div id="receipt-content" className="bg-white p-4 sm:p-6">
+              {/* Receipt Header */}
+              <div className="text-center mb-4 sm:mb-6">
+                <div className="text-xl sm:text-2xl font-bold text-[#37b7ff] mb-2">MyEasyDonate</div>
+                <div className="text-base sm:text-lg font-semibold text-gray-800">DONATION RECEIPT</div>
+                <div className="text-xs sm:text-sm text-gray-600 mt-2">Receipt #: {receiptData.receiptNumber}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Date: {receiptData.date}</div>
+              </div>
+
+              {/* Receipt Details */}
+              <div className="space-y-3 sm:space-y-4">
+                <div className="border-t border-gray-200 pt-3 sm:pt-4">
+                  <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Campaign Details</h3>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-2">
+                      <div className="text-gray-600">Campaign:</div>
+                      <div className="text-gray-800 font-medium break-words">{receiptData.campaignTitle}</div>
+                    </div>
+                    <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-2">
+                      <div className="text-gray-600">Organizer:</div>
+                      <div className="text-gray-800 break-words">{receiptData.campaignOwner}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-3 sm:pt-4">
+                  <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Donor Information</h3>
+                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm">
+                    <div className="text-gray-600">Name:</div>
+                    <div className="text-gray-800 break-words">{receiptData.donorName}</div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-3 sm:pt-4">
+                  <h3 className="font-semibold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Transaction Details</h3>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Donation Amount:</span>
+                      <span className="text-gray-800">{formatCurrency(receiptData.amount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Platform Tip:</span>
+                      <span className="text-gray-800">{formatCurrency(receiptData.tipAmount)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 font-semibold text-sm sm:text-lg">
+                      <span className="text-gray-800">Total Amount:</span>
+                      <span className="text-[#37b7ff]">{formatCurrency(receiptData.totalAmount)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Receipt Footer */}
+              <div className="text-center mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
+                <div className="text-base sm:text-lg font-semibold text-green-600 mb-2">Thank you for your donation!</div>
+                <div className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  Your contribution makes a difference and helps support this important cause.
+                </div>
+                <div className="text-xs text-gray-500 mt-2 sm:mt-3">
+                  This is an official donation receipt from MyEasyDonate.
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col space-y-2 sm:space-y-3 mt-3 sm:mt-4">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <Button onClick={downloadReceiptPDF} className="w-full sm:flex-1 bg-[#37b7ff] hover:bg-blue-600 text-sm sm:text-base h-10 sm:h-auto">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button onClick={printReceipt} variant="outline" className="w-full sm:flex-1 text-sm sm:text-base h-10 sm:h-auto">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print
+                </Button>
+              </div>
+              <Button 
+                onClick={() => {
+                  setShowReceiptModal(false);
+                  // Redirect to campaign page after closing receipt
+                  if (campaign?.slug) {
+                    navigate(`/campaign/${campaign.slug}`);
+                  }
+                }}
+                variant="outline" 
+                className="w-full text-sm sm:text-base h-10 sm:h-auto"
+              >
+                Continue to Campaign
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Notification Dialog */}
+      <AlertDialog open={notification.show} onOpenChange={(open) => setNotification(prev => ({...prev, show: open}))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={
+              notification.type === 'success' ? 'text-green-600' :
+              notification.type === 'error' ? 'text-red-600' :
+              'text-blue-600'
+            }>
+              {notification.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {notification.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setNotification(prev => ({...prev, show: false}))}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

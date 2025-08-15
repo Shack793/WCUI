@@ -14,11 +14,17 @@ export interface DebitWalletResponse {
   message?: string;
 }
 
-export interface CheckStatusPayload {
-  transactionId: string;
-}
-
 export interface CheckStatusResponse {
-  status: string;
-  message?: string;
+  code: string;
+  message: string;
+  data: {
+    refNo: string;
+    msisdn: string;
+    amount: string;
+    customer: string;
+    narration: string;
+    transactionStatus: string;
+    transactionId: string | null;
+    responseCode: string;
+  };
 }
