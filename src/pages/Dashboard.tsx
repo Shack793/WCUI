@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <DashboardNavbar userName={user?.name || ''} />
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-[#37b7ff] to-[#37b7ff] overflow-hidden">
+      <div className="relative bg-gradient-to-r from-[#005da7] to-[#005da7] overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
             title="Total Campaign"
             value={stats.totalCampaigns}
             icon={<Megaphone />}
-            bgColor="bg-[#37b7ff]"
+            bgColor="bg-[#005da7]"
             textColor="text-white"
             onClick={() => navigate('/all-campaigns')}
           />
@@ -147,7 +147,7 @@ const Dashboard: React.FC = () => {
             title="Approved Campaign"
             value={stats.approvedCampaigns}
             icon={<CheckCircle />}
-            bgColor="bg-[#37b7ff]"
+            bgColor="bg-[#005da7]"
             textColor="text-white"
           />
           <StatCard
@@ -178,7 +178,7 @@ const Dashboard: React.FC = () => {
             title="Available Balance"
             amount={stats.availableBalance}
             icon={<Wallet />}
-            bgColor="bg-[#37b7ff]"
+            bgColor="bg-[#005da7]"
             textColor="text-white"
           />
           <FinancialCard
@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Monthly Donation Report */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="bg-[#37b7ff] text-white p-4 rounded-t-lg mb-4">
+            <div className="bg-[#005da7] text-white p-4 rounded-t-lg mb-4">
               <h3 className="text-lg font-semibold">Monthly Donation Report</h3>
               <p className="text-sm opacity-90">Year - 2024</p>
             </div>
@@ -204,7 +204,7 @@ const Dashboard: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Area type="monotone" dataKey="value" stroke="#37b7ff" fill="#37b7ff" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="value" stroke="#005da7" fill="#005da7" fillOpacity={0.6} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -212,7 +212,7 @@ const Dashboard: React.FC = () => {
 
           {/* Monthly Withdraw Report */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="bg-[#37b7ff] text-white p-4 rounded-t-lg mb-4">
+            <div className="bg-[#005da7] text-white p-4 rounded-t-lg mb-4">
               <h3 className="text-lg font-semibold">Monthly Withdraw Report</h3>
               <p className="text-sm opacity-90">Year - 2024</p>
             </div>

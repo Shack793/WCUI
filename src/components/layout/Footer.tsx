@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Linkedin, Instagram } from 'lucide-react';
-import myEasyDonateLogo from '@/images/logo/MyEasyDonate 3.png';
+import myEasyDonateLogo from '@/images/logo/myeasydonate voted logo use.png';
 
 const Footer: React.FC = () => {
   return (
@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
               <div className="flex flex-col items-center space-y-3">
                 <img 
                   src={myEasyDonateLogo} 
-                  alt="MyEasyDonate Logo" 
+                  alt="myeasydonate voted logo use" 
                   className="h-10 w-auto"
                 />
                 <div className="flex space-x-4">

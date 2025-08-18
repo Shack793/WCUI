@@ -212,7 +212,7 @@ export default function DonationForm(props: any) {
             body { font-family: Arial, sans-serif; margin: 20px; }
             .receipt { max-width: 600px; margin: 0 auto; }
             .header { text-align: center; margin-bottom: 30px; }
-            .logo { font-size: 24px; font-weight: bold; color: #37b7ff; }
+            .logo { font-size: 24px; font-weight: bold; color: #005da7; }
             .receipt-title { font-size: 18px; margin: 10px 0; }
             .receipt-info { margin: 20px 0; }
             .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
@@ -606,8 +606,8 @@ export default function DonationForm(props: any) {
   return (
     <>
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-[#37b7ff] to-[#2a8fc7] text-white mb-8">
-        <div className="absolute inset-0 bg-[#37b7ff] bg-opacity-80"></div>
+      <div className="relative bg-gradient-to-r from-[#005da7] to-[#2a8fc7] text-white mb-8">
+        <div className="absolute inset-0 bg-[#005da7] bg-opacity-80"></div>
         <div
           className="relative h-64 bg-cover bg-center flex items-center justify-center"
           style={{
@@ -940,7 +940,7 @@ export default function DonationForm(props: any) {
             <div id="receipt-content" className="bg-white p-4 sm:p-6">
               {/* Receipt Header */}
               <div className="text-center mb-4 sm:mb-6">
-                <div className="text-xl sm:text-2xl font-bold text-[#37b7ff] mb-2">MyEasyDonate</div>
+                <div className="text-xl sm:text-2xl font-bold text-[#005da7] mb-2">MyEasyDonate</div>
                 <div className="text-base sm:text-lg font-semibold text-gray-800">DONATION RECEIPT</div>
                 <div className="text-xs sm:text-sm text-gray-600 mt-2">Receipt #: {receiptData.receiptNumber}</div>
                 <div className="text-xs sm:text-sm text-gray-600">Date: {receiptData.date}</div>
@@ -983,7 +983,7 @@ export default function DonationForm(props: any) {
                     </div>
                     <div className="flex justify-between border-t pt-2 font-semibold text-sm sm:text-lg">
                       <span className="text-gray-800">Total Amount:</span>
-                      <span className="text-[#37b7ff]">{formatCurrency(receiptData.totalAmount)}</span>
+                      <span className="text-[#005da7]">{formatCurrency(receiptData.totalAmount)}</span>
                     </div>
                   </div>
                 </div>
@@ -1004,7 +1004,7 @@ export default function DonationForm(props: any) {
             {/* Action Buttons */}
             <div className="flex flex-col space-y-2 sm:space-y-3 mt-3 sm:mt-4">
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <Button onClick={downloadReceiptPDF} className="w-full sm:flex-1 bg-[#37b7ff] hover:bg-blue-600 text-sm sm:text-base h-10 sm:h-auto">
+                <Button onClick={downloadReceiptPDF} className="w-full sm:flex-1 bg-[#005da7] hover:bg-blue-600 text-sm sm:text-base h-10 sm:h-auto">
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
                 </Button>

@@ -8,9 +8,9 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Dummy UI components for demonstration (replace with your UI library or custom components)
 const Button = (props: any) => <button {...props} className={`rounded-md px-4 py-2 font-medium transition-colors ${props.className}`} />;
-const Input = (props: any) => <input {...props} className={`w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[#37b7ff] ${props.className}`} />;
-const Textarea = (props: any) => <textarea {...props} className={`w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[#37b7ff] ${props.className}`} />;
-const Select = (props: any) => <select {...props} className={`w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[#37b7ff] appearance-none ${props.className}`} />;
+const Input = (props: any) => <input {...props} className={`w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[#005da7] ${props.className}`} />;
+const Textarea = (props: any) => <textarea {...props} className={`w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[#005da7] ${props.className}`} />;
+const Select = (props: any) => <select {...props} className={`w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[#005da7] appearance-none ${props.className}`} />;
 const Card = (props: any) => <div {...props} className={`rounded-md border border-gray-200 ${props.className}`} />;
 
 export default function CreateCampaign() {
@@ -147,7 +147,7 @@ export default function CreateCampaign() {
         <DashboardNavbar userName={userName} />
         
         {/* Hero Section */}
-        <div className="bg-[#37b7ff] text-white py-12 relative">
+        <div className="bg-[#005da7] text-white py-12 relative">
           <div className="container mx-auto px-4 relative z-10 text-center">
             <h1 className="text-4xl font-bold mb-2">Create New Campaign</h1>
             <nav className="flex justify-center">

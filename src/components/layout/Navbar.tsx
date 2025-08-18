@@ -119,7 +119,7 @@ const Navbar: React.FC = () => {
                 href="http://dashboard.myeasydonate.com/login"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-primary text-sm hover:bg-gray-800 hover:border-gray-800"
+                className="text-sm px-4 py-2 bg-[#01b350] text-white rounded-md hover:bg-[#018a41] border border-[#01b350] hover:border-[#018a41] transition-colors"
               >
                 START A CAMPAIGN
               </a>
@@ -159,7 +159,7 @@ const Navbar: React.FC = () => {
             href="http://dashboard.myeasydonate.com/login" 
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary text-sm w-full block text-center"
+            className="text-sm w-full block text-center px-4 py-2 bg-[#01b350] text-white rounded-md hover:bg-[#018a41] border border-[#01b350] hover:border-[#018a41] transition-colors"
             onClick={() => setIsOpen(false)}
           >
             START A CAMPAIGN

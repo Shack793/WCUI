@@ -1,5 +1,5 @@
 import React from 'react';
-import myEasyDonateLogo from '@/images/logo/MyEasyDonate 2.png';
+import myEasyDonateLogo from '@/images/logo/myeasydonate voted logo use.png';
 
 interface MyEasyDonateLogo {
   className?: string;

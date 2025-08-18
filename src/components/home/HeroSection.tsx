@@ -80,7 +80,7 @@ const HeroSection: React.FC = () => {
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 max-w-xs sm:max-w-2xl md:max-w-3xl leading-tight">{slide.title}</h1>
               <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-sm sm:max-w-xl md:max-w-2xl leading-relaxed">{slide.description}</p>
                 <div className="flex flex-col w-full max-w-xs sm:max-w-sm sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <a href="http://dashboard.myeasydonate.com/login" className="btn btn-primary w-full sm:w-auto px-6 py-3 text-sm sm:text-base hover:bg-gray-800 hover:border-gray-800 transition-colors">
+                <a href="http://dashboard.myeasydonate.com/login" className="btn btn-primary w-full sm:w-auto px-6 py-3 text-sm sm:text-base transition-colors" style={{backgroundColor: '#01b350', borderColor: '#01b350'}} onMouseEnter={(e) => {e.currentTarget.style.backgroundColor = '#018a40'; e.currentTarget.style.borderColor = '#018a40';}} onMouseLeave={(e) => {e.currentTarget.style.backgroundColor = '#01b350'; e.currentTarget.style.borderColor = '#01b350';}}>
                   JOIN US
                 </a>
                 <Link to="/public-campaigns" className="btn btn-secondary w-full sm:w-auto px-6 py-3 text-sm sm:text-base border-white">

@@ -116,7 +116,7 @@ const FaqPage: React.FC = () => {
                     expandedItem === item.id ? "text-white" : "bg-white text-gray-800 hover:bg-gray-50"
                   }`}
                   style={{
-                    backgroundColor: expandedItem === item.id ? "#37b7ff" : "white"
+                    backgroundColor: expandedItem === item.id ? "#005da7" : "white"
                   }}
                 >
                   <span className="font-medium">{item.question}</span>

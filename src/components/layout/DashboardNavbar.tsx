@@ -53,7 +53,7 @@ const DashboardNavbar: React.FC<{ userName: string }> = ({ userName }) => {
             </div>
           </nav>
           <div className="flex items-center space-x-4">
-            <button className="bg-[#37b7ff] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-400" onClick={handleLogout}>
+            <button className="bg-[#005da7] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-400" onClick={handleLogout}>
               Logout
             </button>
             <div className="flex items-center space-x-1 text-gray-700 cursor-pointer">

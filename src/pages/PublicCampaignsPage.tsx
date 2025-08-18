@@ -165,7 +165,7 @@ export default function PublicCampaignsPage() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-[#37b7ff]"
+        return "bg-[#005da7]"
       case "pending":
         return "bg-yellow-500"
       case "completed":

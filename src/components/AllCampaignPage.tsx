@@ -132,7 +132,7 @@ const AllCampaignPage: React.FC = () => {
             style={{
               margin: 2,
               padding: '4px 8px',
-              background: currentPage === page ? '#37b7ff' : '#eee',
+              background: currentPage === page ? '#005da7' : '#eee',
               color: currentPage === page ? '#fff' : '#333',
               border: 'none',
               borderRadius: 4,

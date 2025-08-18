@@ -252,7 +252,7 @@ export default function CampaignDetailsPage() {
     // Different gradient colors for different user types
     const getBackgroundClass = () => {
       if (isOrganizer) {
-        return 'bg-gradient-to-br from-[#37b7ff] to-[#2a9ae6]';
+        return 'bg-gradient-to-br from-[#005da7] to-[#2a9ae6]';
       }
       if (isAnonymous) {
         return 'bg-gradient-to-br from-gray-400 to-gray-600';
@@ -365,7 +365,7 @@ export default function CampaignDetailsPage() {
                 {shouldShowViewMore() && (
                   <Button
                     variant="link"
-                    className="p-0 h-auto text-[#37b7ff] hover:text-[#2a9ae6] font-medium mt-2"
+                    className="p-0 h-auto text-[#005da7] hover:text-[#2a9ae6] font-medium mt-2"
                     onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                   >
                     {isDescriptionExpanded ? 'View less' : 'View more'}

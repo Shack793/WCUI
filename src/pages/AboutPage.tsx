@@ -73,12 +73,12 @@ const AboutPage: React.FC = () => {
 
             {/* Statistics */}
             <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="bg-[#37b7ff] bg-opacity-10 p-6 rounded-lg text-center">
-                <h3 className="text-3xl font-bold text-[#37b7ff] mb-2">GHS 10,000+</h3>
+              <div className="bg-[#005da7] bg-opacity-10 p-6 rounded-lg text-center">
+                <h3 className="text-3xl font-bold text-[#005da7] mb-2">GHS 10,000+</h3>
                 <p className="text-gray-700 font-medium">Total Fund Raised</p>
               </div>
-              <div className="bg-[#37b7ff] bg-opacity-10 p-6 rounded-lg text-center">
-                <h3 className="text-3xl font-bold text-[#37b7ff] mb-2">13+</h3>
+              <div className="bg-[#005da7] bg-opacity-10 p-6 rounded-lg text-center">
+                <h3 className="text-3xl font-bold text-[#005da7] mb-2">13+</h3>
                 <p className="text-gray-700 font-medium">Total Campaigns</p>
               </div>
             </div>
@@ -89,7 +89,7 @@ const AboutPage: React.FC = () => {
               rel="noopener noreferrer"
             >
               <div className="mt-8">
-                <button className="bg-[#37b7ff] hover:bg-[#2a8fc7] text-white px-8 py-3 rounded-lg font-medium transition-colors duration-300">
+                <button className="bg-[#005da7] hover:bg-[#2a8fc7] text-white px-8 py-3 rounded-lg font-medium transition-colors duration-300">
                   Start a Campaign
                 </button>
               </div>
@@ -101,7 +101,7 @@ const AboutPage: React.FC = () => {
       {/* Decorative Element */}
       <div className="flex justify-end pr-16 -mt-16">
         <div className="w-24 h-24 opacity-10">
-          <svg viewBox="0 0 100 100" className="w-full h-full fill-[#37b7ff]">
+          <svg viewBox="0 0 100 100" className="w-full h-full fill-[#005da7]">
             <polygon points="50,15 61,35 85,35 67,50 73,70 50,57 27,70 33,50 15,35 39,35" />
           </svg>
         </div>
