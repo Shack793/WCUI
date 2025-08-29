@@ -60,6 +60,26 @@ interface ReceiptData {
   receiptNumber: string
 }
 
+// Fee structure based on donation amount
+const FEE_STRUCTURE = {
+  TIER1: {
+    maxAmount: 2000,
+    basePercentage: 2.5,
+    maxPercentage: 25
+  },
+  TIER2: {
+    minAmount: 2000,
+    maxAmount: 5000,
+    basePercentage: 2.0,
+    maxPercentage: 25
+  },
+  TIER3: {
+    minAmount: 5000,
+    basePercentage: 1.8,
+    maxPercentage: 25
+  }
+} as const;
+
 export default function DonationForm(props: any) {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -116,7 +136,7 @@ export default function DonationForm(props: any) {
     if (showCustomTip && customTip) {
       return Number.parseFloat(customTip)
     }
-    return (getDonationAmount() * tipPercentage[0]) / 100
+    return (getDonationAmount() * Math.max(tipPercentage[0], calculateBaseFeePercentage(getDonationAmount()))) / 100
   }
 
   const getTotalAmount = (): number => {
@@ -136,6 +156,28 @@ export default function DonationForm(props: any) {
   const formatCurrency = (amount: number): string => {
     return `₵${amount.toFixed(2)}`
   }
+
+  // Calculate base fee percentage based on amount
+  const calculateBaseFeePercentage = (amount: number): number => {
+    if (amount < FEE_STRUCTURE.TIER1.maxAmount) {
+      return FEE_STRUCTURE.TIER1.basePercentage;
+    } else if (amount <= FEE_STRUCTURE.TIER2.maxAmount) {
+      return FEE_STRUCTURE.TIER2.basePercentage;
+    } else {
+      return FEE_STRUCTURE.TIER3.basePercentage;
+    }
+  };
+
+  // Get fee tier information for tooltip
+  const getFeeTierInfo = (amount: number): string => {
+    if (amount < FEE_STRUCTURE.TIER1.maxAmount) {
+      return `Base fee: ${FEE_STRUCTURE.TIER1.basePercentage}% (for amounts < ₵${FEE_STRUCTURE.TIER1.maxAmount})`;
+    } else if (amount <= FEE_STRUCTURE.TIER2.maxAmount) {
+      return `Base fee: ${FEE_STRUCTURE.TIER2.basePercentage}% (for amounts ₵${FEE_STRUCTURE.TIER2.minAmount}-${FEE_STRUCTURE.TIER2.maxAmount})`;
+    } else {
+      return `Base fee: ${FEE_STRUCTURE.TIER3.basePercentage}% (for amounts ≥ ₵${FEE_STRUCTURE.TIER3.minAmount})`;
+    }
+  };
 
   // Generate receipt data
   const generateReceiptData = (transactionId: string | undefined): ReceiptData => {
@@ -344,13 +386,15 @@ export default function DonationForm(props: any) {
             if (statusCheckCancelledRef.current) {
               console.log('Status checking was cancelled by user');
               setCheckingPaymentStatus(false);
-              setStatusCheckCancelled(false);
+              setStatusCheckCancelled(true); // Set to true to prevent guest donation
               statusCheckCancelledRef.current = false;
               showNotification(
                 'Transaction Cancelled', 
                 'Status checking was cancelled. Please check your mobile money account manually.',
                 'info'
               );
+              // Ensure no guest donation happens for cancellations
+              status = 'CANCELLED';
             } else if (pollCount >= maxPolls && (status === 'PENDING' || !status)) {
               console.log('Status check timeout: Transaction still PENDING after maximum attempts - considering as FAILED');
               setCheckingPaymentStatus(false);
@@ -379,7 +423,8 @@ export default function DonationForm(props: any) {
           // Handle other falcon pay errors
           lastToastError = data.error || 'Unknown error';
           console.error('Payment Error:', lastToastError);
-          shouldAttemptGuestDonation = true;
+          // Do NOT attempt guest donation for any errors
+          shouldAttemptGuestDonation = false;
         }
       } catch (err: any) {
         lastApiError = err?.response?.data;
@@ -409,18 +454,16 @@ export default function DonationForm(props: any) {
         } catch (storageErr) {
           console.error('Failed to cache error:', storageErr);
         }
-        // If error is not the specific MoMo failure (errorCode 100), attempt guest donation
-        if (!isSpecificMoMoFailure) {
-          shouldAttemptGuestDonation = true;
-        }
+        // Never attempt guest donation on errors
+        shouldAttemptGuestDonation = false;
       }
 
-      // Make guest donation only for SUCCESSFUL or FAILED status (not PENDING or other statuses)
+      // Make guest donation ONLY for SUCCESSFUL payments, not for failed or cancelled transactions
       const isSpecificMoMoFailure = lastApiError && lastApiError.errorCode === '100';
       const shouldProceedWithGuestDonation = !isSpecificMoMoFailure && !statusCheckCancelled && (
         status === 'SUCCESSFUL' || 
-        status === 'SUCCESS' || 
-        status === 'FAILED'
+        status === 'SUCCESS'
+        // Removed FAILED status - we don't want to record failed payments
       );
       
       if (shouldProceedWithGuestDonation && campaign?.slug) {
@@ -435,18 +478,25 @@ export default function DonationForm(props: any) {
           });
           const guestDonationData = guestDonationRes.data;
           if (guestDonationRes.status === 200 || guestDonationRes.status === 201) {
-            // Generate receipt data and show receipt modal for successful payments
-            const receipt = generateReceiptData(transactionId);
-            setReceiptData(receipt);
-            setShowReceiptModal(true);
-            console.log('Guest donation successful, showing receipt...');
-            
-            // Show success toast with receipt options
+            // Generate receipt data and show receipt modal ONLY for successful payments
             if (status === 'SUCCESSFUL' || status === 'SUCCESS') {
+              const receipt = generateReceiptData(transactionId);
+              setReceiptData(receipt);
+              setShowReceiptModal(true);
+              console.log('Guest donation successful, showing receipt...');
+              
               showNotification(
                 'Payment Successful!', 
                 'Your donation was successful. You can now download or print your receipt.',
                 'success'
+              );
+            } else {
+              // Don't show receipt for non-successful payments
+              console.log('Payment not successful, not showing receipt.');
+              showNotification(
+                'Donation Recorded', 
+                'Your donation was recorded, but the payment was not successful.',
+                'info'
               );
             }
           } else {
@@ -461,13 +511,11 @@ export default function DonationForm(props: any) {
           }
         } catch (guestErr: any) {
           console.error('Donation Record Error:', guestErr.message || 'Failed to record donation.');
-          if (status === 'FAILED') {
-            showNotification(
-              'Payment Failed', 
-              'Your payment was not successful. Please try again with a different payment method.',
-              'error'
-            );
-          }
+          showNotification(
+            'Payment Error', 
+            'There was an error processing your donation. Please try again later.',
+            'error'
+          );
         }
       } else if (status === 'PENDING') {
         console.log('Payment status is still PENDING, not attempting guest donation yet.');
@@ -511,10 +559,31 @@ export default function DonationForm(props: any) {
     }
 
     console.log("Donation submitted:", donationData)
-    // Generate receipt data and show receipt modal instead of toast
-    const receipt = generateReceiptData(undefined); // No transaction ID for card payments
-    setReceiptData(receipt);
-    setShowReceiptModal(true);
+    
+    // For card payments, simulate a successful payment
+    // In a real implementation, you would process the card payment here
+    // and only show the receipt on success
+    const isCardPaymentSuccessful = true; // This would be determined by the card processor response
+    
+    if (isCardPaymentSuccessful) {
+      // Generate receipt data and show receipt modal
+      const receipt = generateReceiptData(undefined); // No transaction ID for card payments
+      setReceiptData(receipt);
+      setShowReceiptModal(true);
+      showNotification(
+        'Payment Successful!', 
+        'Your donation was successful. You can now download or print your receipt.',
+        'success'
+      );
+    } else {
+      // Don't show receipt for failed card payments
+      showNotification(
+        'Payment Failed', 
+        'Your card payment was not processed successfully. Please try again or use a different payment method.',
+        'error'
+      );
+    }
+    
     setDonationLoading(false);
   }
 
@@ -591,6 +660,15 @@ export default function DonationForm(props: any) {
       }));
     }
   }, [momoFields.customer]);
+
+  // Update tip percentage when donation amount changes to ensure it meets minimum fee
+  useEffect(() => {
+    const amount = getDonationAmount();
+    const baseFee = calculateBaseFeePercentage(amount);
+    if (tipPercentage[0] < baseFee) {
+      setTipPercentage([baseFee]);
+    }
+  }, [customAmount, selectedAmount]);
 
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=80&width=80";
@@ -735,24 +813,36 @@ export default function DonationForm(props: any) {
             {/* Tip Section */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <h4 className="font-semibold text-gray-900">Tip   services</h4>
-                <Info className="h-4 w-4 text-gray-400" />
+                <h4 className="font-semibold text-gray-900">Service Fee</h4>
+                <div className="relative group">
+                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
+                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
+                    {getFeeTierInfo(getDonationAmount())}
+                  </div>
+                </div>
               </div>
 
               <p className="text-sm text-gray-600 leading-relaxed">
-                MyEasyDonate has a 0% platform fee for organizers. MyEasyDonate will continue offering its services thanks to
-                donors who will leave an optional amount here:
+                This helps us maintain and improve our platform services. The base fee varies by donation amount, and you can choose to add more support:
               </p>
 
               <div className="space-y-4">
                 <div className="text-center">
-                  <span className="text-2xl font-bold text-gray-900">{tipPercentage[0]}%</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {Math.max(tipPercentage[0], calculateBaseFeePercentage(getDonationAmount()))}%
+                  </span>
+                  <span className="text-sm text-gray-500 ml-2">
+                    (Min: {calculateBaseFeePercentage(getDonationAmount())}%)
+                  </span>
                 </div>
                 <Slider
                   value={tipPercentage}
-                  onValueChange={setTipPercentage}
-                  max={25}
-                  min={2}
+                  onValueChange={(value: number[]) => {
+                    const baseFee = calculateBaseFeePercentage(getDonationAmount());
+                    setTipPercentage([Math.max(value[0], baseFee)]);
+                  }}
+                  max={FEE_STRUCTURE.TIER1.maxPercentage}
+                  min={calculateBaseFeePercentage(getDonationAmount())}
                   step={0.5}
                   className="w-full"
                 />

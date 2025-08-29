@@ -173,14 +173,7 @@ const Navbar: React.FC = () => {
             <ChevronDown size={16} />
           </button>
           
-          <Link 
-            to="/dashboard" 
-            className="text-sm text-gray-700 hover:text-primary-500 flex items-center"
-            onClick={() => setIsOpen(false)}
-          >
-            <User size={16} className="mr-1" />
-            Dashboard
-          </Link>
+         
               </div>
             </div>
           </div>
