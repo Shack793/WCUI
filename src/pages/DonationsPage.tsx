@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Slider } from "@/components/ui/slider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CreditCard, Smartphone, Info, Gift, Download, Printer } from "lucide-react"
 import { paymentsApi, campaignApi, walletApi } from '@/services/api';
@@ -60,26 +59,6 @@ interface ReceiptData {
   receiptNumber: string
 }
 
-// Fee structure based on donation amount
-const FEE_STRUCTURE = {
-  TIER1: {
-    maxAmount: 2000,
-    basePercentage: 2.5,
-    maxPercentage: 25
-  },
-  TIER2: {
-    minAmount: 2000,
-    maxAmount: 5000,
-    basePercentage: 2.0,
-    maxPercentage: 25
-  },
-  TIER3: {
-    minAmount: 5000,
-    basePercentage: 1.8,
-    maxPercentage: 25
-  }
-} as const;
-
 export default function DonationForm(props: any) {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -101,12 +80,8 @@ export default function DonationForm(props: any) {
   });
   const [selectedAmount, setSelectedAmount] = useState<string>("")
   const [customAmount, setCustomAmount] = useState<string>("")
-  const [tipPercentage, setTipPercentage] = useState<number[]>([2])
   const [paymentMethod, setPaymentMethod] = useState<string>("momo")
   const [isAnonymous, setIsAnonymous] = useState<boolean>(false)
-  const [marketingUpdates, setMarketingUpdates] = useState<boolean>(true)
-  const [showCustomTip, setShowCustomTip] = useState<boolean>(false)
-  const [customTip, setCustomTip] = useState<string>("")
   const [momoFields, setMomoFields] = useState({
     customer: '',
     msisdn: '',
@@ -133,10 +108,7 @@ export default function DonationForm(props: any) {
   }
 
   const getTipAmount = (): number => {
-    if (showCustomTip && customTip) {
-      return Number.parseFloat(customTip)
-    }
-    return (getDonationAmount() * Math.max(tipPercentage[0], calculateBaseFeePercentage(getDonationAmount()))) / 100
+    return 0 // No charges - donations are free
   }
 
   const getTotalAmount = (): number => {
@@ -156,28 +128,6 @@ export default function DonationForm(props: any) {
   const formatCurrency = (amount: number): string => {
     return `₵${amount.toFixed(2)}`
   }
-
-  // Calculate base fee percentage based on amount
-  const calculateBaseFeePercentage = (amount: number): number => {
-    if (amount < FEE_STRUCTURE.TIER1.maxAmount) {
-      return FEE_STRUCTURE.TIER1.basePercentage;
-    } else if (amount <= FEE_STRUCTURE.TIER2.maxAmount) {
-      return FEE_STRUCTURE.TIER2.basePercentage;
-    } else {
-      return FEE_STRUCTURE.TIER3.basePercentage;
-    }
-  };
-
-  // Get fee tier information for tooltip
-  const getFeeTierInfo = (amount: number): string => {
-    if (amount < FEE_STRUCTURE.TIER1.maxAmount) {
-      return `Base fee: ${FEE_STRUCTURE.TIER1.basePercentage}% (for amounts < ₵${FEE_STRUCTURE.TIER1.maxAmount})`;
-    } else if (amount <= FEE_STRUCTURE.TIER2.maxAmount) {
-      return `Base fee: ${FEE_STRUCTURE.TIER2.basePercentage}% (for amounts ₵${FEE_STRUCTURE.TIER2.minAmount}-${FEE_STRUCTURE.TIER2.maxAmount})`;
-    } else {
-      return `Base fee: ${FEE_STRUCTURE.TIER3.basePercentage}% (for amounts ≥ ₵${FEE_STRUCTURE.TIER3.minAmount})`;
-    }
-  };
 
   // Generate receipt data
   const generateReceiptData = (transactionId: string | undefined): ReceiptData => {
@@ -326,7 +276,6 @@ export default function DonationForm(props: any) {
       let statusRes: any = null;
       let lastApiError: any = null;
       let lastToastError: string | undefined = undefined;
-      let shouldAttemptGuestDonation = false;
       try {
         console.log('Sending MoMo payload:', momoPayload);
         const res = await paymentsApi.debitWallet(momoPayload);
@@ -410,7 +359,6 @@ export default function DonationForm(props: any) {
           } else {
             lastToastError = 'No transaction ID received';
             console.error('Payment Error:', lastToastError);
-            shouldAttemptGuestDonation = true;
           }
         } else if (data.errorCode === "100") {
           // Handle error code 100 - Transaction Failed
@@ -418,24 +366,20 @@ export default function DonationForm(props: any) {
           lastToastError = data.error || 'Transaction Failed';
           showNotification('Payment Error', 'Transaction Failed. Please try again or use a different payment method.', 'error');
           // Do NOT attempt guest donation for error code 100
-          shouldAttemptGuestDonation = false;
         } else {
           // Handle other falcon pay errors
           lastToastError = data.error || 'Unknown error';
           console.error('Payment Error:', lastToastError);
           // Do NOT attempt guest donation for any errors
-          shouldAttemptGuestDonation = false;
         }
       } catch (err: any) {
         lastApiError = err?.response?.data;
         let errorMsg = '';
-        let isSpecificMoMoFailure = false;
         if (err.response) {
           const responseData = err.response.data;
           errorMsg = `API Error: ${JSON.stringify(responseData)}`;
           // Check for errorCode 100 Transaction Failed from falcon pay
           if (responseData && responseData.errorCode === '100') {
-            isSpecificMoMoFailure = true;
             showNotification('Payment Error', 'Transaction Failed. Please try again or use a different payment method.', 'error');
           } else {
             console.error('Payment Error:', errorMsg);
@@ -455,12 +399,10 @@ export default function DonationForm(props: any) {
           console.error('Failed to cache error:', storageErr);
         }
         // Never attempt guest donation on errors
-        shouldAttemptGuestDonation = false;
       }
 
       // Make guest donation ONLY for SUCCESSFUL payments, not for failed or cancelled transactions
-      const isSpecificMoMoFailure = lastApiError && lastApiError.errorCode === '100';
-      const shouldProceedWithGuestDonation = !isSpecificMoMoFailure && !statusCheckCancelled && (
+      const shouldProceedWithGuestDonation = !statusCheckCancelled && (
         status === 'SUCCESSFUL' || 
         status === 'SUCCESS'
         // Removed FAILED status - we don't want to record failed payments
@@ -555,7 +497,6 @@ export default function DonationForm(props: any) {
       total: getTotalAmount(),
       paymentMethod,
       isAnonymous,
-      marketingUpdates,
     }
 
     console.log("Donation submitted:", donationData)
@@ -660,15 +601,6 @@ export default function DonationForm(props: any) {
       }));
     }
   }, [momoFields.customer]);
-
-  // Update tip percentage when donation amount changes to ensure it meets minimum fee
-  useEffect(() => {
-    const amount = getDonationAmount();
-    const baseFee = calculateBaseFeePercentage(amount);
-    if (tipPercentage[0] < baseFee) {
-      setTipPercentage([baseFee]);
-    }
-  }, [customAmount, selectedAmount]);
 
   const getImageUrl = (url: string | null) => {
     if (!url) return "/placeholder.svg?height=80&width=80";
@@ -810,49 +742,6 @@ export default function DonationForm(props: any) {
               </div>
             </div>
 
-            {/* Tip Section */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <h4 className="font-semibold text-gray-900">Service Fee</h4>
-                <div className="relative group">
-                  <Info className="h-4 w-4 text-gray-400 cursor-help" />
-                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
-                    {getFeeTierInfo(getDonationAmount())}
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-sm text-gray-600 leading-relaxed">
-                This helps us maintain and improve our platform services. The base fee varies by donation amount, and you can choose to add more support:
-              </p>
-
-              <div className="space-y-4">
-                <div className="text-center">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {Math.max(tipPercentage[0], calculateBaseFeePercentage(getDonationAmount()))}%
-                  </span>
-                  <span className="text-sm text-gray-500 ml-2">
-                    (Min: {calculateBaseFeePercentage(getDonationAmount())}%)
-                  </span>
-                </div>
-                <Slider
-                  value={tipPercentage}
-                  onValueChange={(value: number[]) => {
-                    const baseFee = calculateBaseFeePercentage(getDonationAmount());
-                    setTipPercentage([Math.max(value[0], baseFee)]);
-                  }}
-                  max={FEE_STRUCTURE.TIER1.maxPercentage}
-                  min={calculateBaseFeePercentage(getDonationAmount())}
-                  step={0.5}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>2%</span>
-                  <span>25%</span>
-                </div>
-              </div>
-            </div>
-
             {/* Payment Method */}
             <div className="space-y-4">
               <h4 className="font-semibold text-gray-900">Payment method</h4>
@@ -961,11 +850,6 @@ export default function DonationForm(props: any) {
                 <span className="font-medium">{formatCurrency(getDonationAmount())}</span>
               </div>
 
-            {/*  <div className="flex justify-between text-sm">
-                <span className="text-gray-600">MyEasyDonate tip</span>
-                <span className="font-medium">{formatCurrency(getTipAmount())}</span>
-              </div>*/}
-
               <div className="border-t pt-2 mt-3">
                 <div className="flex justify-between font-semibold">
                   <span>Total due today</span>
@@ -1066,10 +950,6 @@ export default function DonationForm(props: any) {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Donation Amount:</span>
                       <span className="text-gray-800">{formatCurrency(receiptData.amount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Platform Tip:</span>
-                      <span className="text-gray-800">{formatCurrency(receiptData.tipAmount)}</span>
                     </div>
                     <div className="flex justify-between border-t pt-2 font-semibold text-sm sm:text-lg">
                       <span className="text-gray-800">Total Amount:</span>
