@@ -41,11 +41,18 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ url, open, onClose, onToast }
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share via QR Code</DialogTitle>
+          <DialogTitle>
+            <div className="text-center">Share via QR Code or USSD</div>
+          </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4">
           <div ref={qrRef} className="bg-white p-4 rounded-lg shadow">
+            <p className="text-center text-xs font-medium text-gray-700 mb-2 px-2">Scan to Donate</p>
             <QRCode value={url} size={180} />
+            <div className="mt-4 text-center border-t pt-4">
+              <p className="text-sm text-gray-600 mb-1">Or dial</p>
+              <p className="text-lg font-bold text-[#005da7]">*716*2#</p>
+            </div>
           </div>
           <div className="flex space-x-2">
             <Button onClick={handleDownloadPNG} variant="outline">Download as PNG</Button>

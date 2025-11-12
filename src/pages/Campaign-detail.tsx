@@ -514,7 +514,7 @@ export default function CampaignDetailsPage() {
                 }}
               >
                 <span className="text-2xl mb-1">📱</span>
-                <span className="text-xs">Show QR Code</span>
+                <span className="text-xs">Show QR Code / USSD</span>
               </Button>
             </div>
 

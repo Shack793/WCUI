@@ -23,8 +23,8 @@ const AboutSection: React.FC = () => {
           </p>
           
           <p className="leading-relaxed text-sm sm:text-base">
-            Whether you're raising funds for a loved one's funeral, a Church building project, 
-            your Alma mater's anniversary, a life-saving surgery, or a small business dream,
+            Whether you're raising funds for a Church building project, your Alma mater's anniversary, 
+            a life-saving surgery, a small business dream or collection of funeral donations,
             MyEasyDonate is here to help you make it happen — securely, locally, and globally.
             With just a few taps, you can create your personalized donation campaign and receive 
             contributions from anywhere in the world. From Mobile Money and USSD short codes to 
@@ -38,7 +38,7 @@ const AboutSection: React.FC = () => {
             <CheckCircle className="text-primary-500 mr-2 sm:mr-3 mt-1 flex-shrink-0" size={18} />
             <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
           <span className="font-semibold">Local. Global. Limitless.</span><br />
-          Whether your supporters are in Kumasi, Kasoa, or Canada, they can easily donate using their preferred method — and you'll get notified instantly.
+         Wherever your congregation, members, or supporters may be; in what Region, City or Country, donations can be done easily using their preferred method — and you'll get notified instantly
             </p>
           </div>
           

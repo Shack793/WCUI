@@ -411,14 +411,22 @@ export default function DonationForm(props: any) {
       if (shouldProceedWithGuestDonation && campaign?.slug) {
         try {
           console.log(`Attempting guest donation with transaction status: ${status}...`);
-          const guestDonationRes = await campaignApi.donateGuest(campaign.slug, {
+          const guestDonationPayload = {
             payment_method_id: 1,
-            amount: getDonationAmount(),
+            amount: parseFloat(getDonationAmount().toFixed(2)), // Ensure it's a proper float
             name: isAnonymous ? 'Anonymous' : (momoFields.customer || 'John Doe'),
-            email: 'john@example.com',
-            is_anonymous: isAnonymous,
+          };
+          console.log('Guest donation endpoint:', `https://admin.myeasydonate.com/api/v1/campaigns/${campaign.slug}/donate/guest`);
+          console.log('Guest donation payload:', guestDonationPayload);
+          console.log('Payload types:', {
+            payment_method_id_type: typeof guestDonationPayload.payment_method_id,
+            amount_type: typeof guestDonationPayload.amount,
+            name_type: typeof guestDonationPayload.name
           });
+          
+          const guestDonationRes = await campaignApi.donateGuest(campaign.slug, guestDonationPayload);
           const guestDonationData = guestDonationRes.data;
+          console.log('Guest donation response:', guestDonationData);
           if (guestDonationRes.status === 200 || guestDonationRes.status === 201) {
             // Generate receipt data and show receipt modal ONLY for successful payments
             if (status === 'SUCCESSFUL' || status === 'SUCCESS') {
@@ -452,7 +460,21 @@ export default function DonationForm(props: any) {
             }
           }
         } catch (guestErr: any) {
-          console.error('Donation Record Error:', guestErr.message || 'Failed to record donation.');
+          console.error('Donation Record Error Details:', {
+            message: guestErr.message,
+            response: guestErr.response?.data,
+            status: guestErr.response?.status,
+            statusText: guestErr.response?.statusText,
+            endpoint: `https://admin.myeasydonate.com/api/v1/campaigns/${campaign?.slug}/donate/guest`,
+            payload: {
+              payment_method_id: 1,
+              amount: parseFloat(getDonationAmount().toFixed(2)),
+              name: isAnonymous ? 'Anonymous' : (momoFields.customer || 'John Doe'),
+            }
+          });
+          console.error('Server response data:', guestErr.response?.data);
+          console.error('Request headers sent:', guestErr.config?.headers);
+          console.error('Full error object:', guestErr);
           showNotification(
             'Payment Error', 
             'There was an error processing your donation. Please try again later.',
@@ -530,18 +552,23 @@ export default function DonationForm(props: any) {
 
   useEffect(() => {
     if (!slug) return;
+    console.log('Loading campaign for slug:', slug);
     setLoading(true);
     setError(null);
     setCampaignNotFound(false);
     campaignApi.getPublic()
       .then(res => {
         const data = res.data;
+        console.log('Public campaigns data:', data);
         const campaignsData = Array.isArray(data) ? data : data.data || [];
+        console.log('Searching for campaign with slug:', slug, 'in', campaignsData.length, 'campaigns');
         const found = campaignsData.find((c: Campaign) => c.slug === slug);
         if (found) {
+          console.log('Found campaign:', found);
           setCampaign(found);
           setCampaignNotFound(false);
         } else {
+          console.log('Campaign not found with slug:', slug);
           setError('Campaign not found');
           setCampaignNotFound(true);
         }

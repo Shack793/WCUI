@@ -1,9 +1,20 @@
 import axiosInstance from '@/lib/axios';
+import axios from 'axios';
 import type { DebitWalletPayload, DebitWalletResponse, CheckStatusResponse } from '@/lib/types';
 
 // Use the shared axiosInstance from lib/axios.ts, which already has the correct baseURL and interceptors
 // No need to create a new instance or set withCredentials
 const api = axiosInstance;
+
+// Create a separate axios instance for guest donations (no auth)
+const guestApi = axios.create({
+  baseURL: 'https://admin.myeasydonate.com/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: false,
+});
 
 // Campaign API endpoints
 export const campaignApi = {
@@ -18,7 +29,10 @@ export const campaignApi = {
   getRecentDonations: (slug: string) => api.get(`/campaigns/${slug}/donations/recent`),
   create: (data: any) => api.post('/campaigns', data),
   donate: (campaignId: number, data: any) => api.post(`/campaigns/${campaignId}/donations`, data),
-  donateGuest: (slug: string, data: any) => api.post(`/campaigns/${slug}/donate/guest`, data),
+  donateGuest: (slug: string, data: any) => {
+    // Use guestApi without authentication for guest donations
+    return guestApi.post(`/campaigns/${slug}/donate/guest`, data);
+  },
 };
 
 // Category API endpoints
