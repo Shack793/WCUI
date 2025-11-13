@@ -10,9 +10,11 @@ interface QRCodeModalProps {
   open: boolean;
   onClose: () => void;
   onToast?: (msg: string) => void;
+  ussdCode?: string;
+  ussdDialCode?: string;
 }
 
-const QRCodeModal: React.FC<QRCodeModalProps> = ({ url, open, onClose, onToast }) => {
+const QRCodeModal: React.FC<QRCodeModalProps> = ({ url, open, onClose, onToast, ussdCode, ussdDialCode }) => {
   const qrRef = useRef<HTMLDivElement>(null);
 
   const handleDownloadPNG = async () => {
@@ -51,7 +53,13 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ url, open, onClose, onToast }
             <QRCode value={url} size={180} />
             <div className="mt-4 text-center border-t pt-4">
               <p className="text-sm text-gray-600 mb-1">Or dial</p>
-              <p className="text-lg font-bold text-[#005da7]">*716*2#</p>
+              <p className="text-lg font-bold text-[#005da7] mb-2">{ussdDialCode || '*716*2#'}</p>
+              {ussdCode && (
+                <div className="mt-2 pt-2 border-t">
+                  <p className="text-xs text-gray-500 mb-1">Enter Code:</p>
+                  <p className="text-base font-bold text-gray-800">{ussdCode}</p>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex space-x-2">

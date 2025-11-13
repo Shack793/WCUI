@@ -37,6 +37,8 @@ interface Campaign {
   boost_ends_at: string | null
   boost_ends_at_formatted: string | null
   boost_days_remaining: number | null
+  ussd_code?: string
+  ussd_dial_code?: string
   category: {
     id: number
     name: string
@@ -566,6 +568,8 @@ export default function CampaignDetailsPage() {
         open={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
         onToast={handleToast}
+        ussdCode={campaign?.ussd_code || ''}
+        ussdDialCode={campaign?.ussd_dial_code || '*716*2#'}
       />
       <Footer />
     </div>
