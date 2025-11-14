@@ -15,6 +15,7 @@ import Footer from "@/components/layout/Footer"
 import QRCodeModal from '@/components/QRCodeModal';
 import { CampaignDetailSkeleton } from '@/components/ui/shimmer';
 import { campaignApi } from '@/services/api';
+import MetaTags from '@/components/common/MetaTags';
 
 interface Campaign {
   id: number
@@ -299,8 +300,26 @@ export default function CampaignDetailsPage() {
 
   const progress = calculateProgress(campaign.current_amount, campaign.goal_amount)
 
+  // Prepare meta tags data
+  const truncateText = (text: string, maxLength: number = 160) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
+  const metaTitle = `Support ${campaign.title} | MyEasyDonate`;
+  const metaDescription = truncateText(campaign.description, 160);
+  const metaImage = getImageUrl(campaign.image_url);
+  const metaUrl = getCurrentUrl();
+
   return (
     <div className="flex flex-col min-h-screen">
+      <MetaTags
+        title={metaTitle}
+        description={metaDescription}
+        image={metaImage}
+        url={metaUrl}
+        type="website"
+      />
       <Navbar />
       <main className="flex-grow bg-white">
         <div className="container mx-auto px-4 py-8 max-w-6xl">
