@@ -25,6 +25,8 @@ import PublicCampaignsPage from './pages/PublicCampaignsPage';
 import UpcomingCampaignsPage from './pages/UpcomingCampaignsPage';
 import ContactPage from './pages/ContactPage';
 import CampaignDetailsPage from './pages/Campaign-detail';
+import TermsAndConditionsPage from './pages/TermsAndConditionsPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 
 const App: React.FC = () => {
   // Add Tawk.to live chat script
@@ -110,6 +112,16 @@ const App: React.FC = () => {
           <Route path="/contact" element={
             <PublicRoute>
               <ContactPage />
+            </PublicRoute>
+          } />
+          <Route path="/terms-and-conditions" element={
+            <PublicRoute>
+              <TermsAndConditionsPage />
+            </PublicRoute>
+          } />
+          <Route path="/privacy-policy" element={
+            <PublicRoute>
+              <PrivacyPolicyPage />
             </PublicRoute>
           } />
           <Route path="/donate/:slug" element={
