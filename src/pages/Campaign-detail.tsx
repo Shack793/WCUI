@@ -52,20 +52,45 @@ interface Campaign {
   }
 }
 
-interface Donation {
+interface Campaign {
   id: number
-  donor_name: string
-  amount: string
-  message: string
-  is_anonymous: boolean
+  user_id: number
+  category_id: number
+  title: string
+  slug: string
+  description: string
+  goal_amount: string
+  current_amount: string
+  start_date: string
+  end_date: string
+  status: string
+  visibility: string
+  thumbnail: string | null
+  image_url: string | null
   created_at: string
+  updated_at: string
+  is_boosted: boolean
+  boost_ends_at: string | null
+  boost_ends_at_formatted: string | null
+  boost_days_remaining: number | null
+  ussd_code?: string
+  ussd_dial_code?: string
+  category: {
+    id: number
+    name: string
+    description: string
+  }
+  user: {
+    id: number
+    name: string
+    email: string
+  }
 }
 
 export default function CampaignDetailsPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -91,7 +116,6 @@ export default function CampaignDetailsPage() {
         const response = await campaignApi.getBySlug(slug!);
         const data = response.data;
         setCampaign(data); // API returns the campaign object directly
-        setDonations([]); // We'll use recentStats for donations now
       } catch (e: any) {
         setError('Failed to fetch campaign details');
       } finally {
@@ -589,6 +613,8 @@ export default function CampaignDetailsPage() {
         onToast={handleToast}
         ussdCode={campaign?.ussd_code || ''}
         ussdDialCode={campaign?.ussd_dial_code || '*716*2#'}
+        campaignName={campaign?.title || 'Campaign'}
+        campaignImage={campaign?.image_url || campaign?.thumbnail || undefined}
       />
       <Footer />
     </div>
